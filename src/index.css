@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	html { font-family: 'Roboto', Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+	body { font-family: 'Roboto', Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+}
+
+@layer components {
+	.btn-primary { 
+		background-color: #4F6C3C !important; 
+		color: white !important;
+		font-weight: 500;
+		padding: 0.5rem 1rem;
+		border-radius: 0.5rem;
+		transition: all 0.2s;
+	}
+	.btn-primary:hover { 
+		background-color: #3f5630 !important; 
+	}
+	.btn-secondary { 
+		background-color: #e9efe1 !important; 
+		color: #1a2310 !important;
+		font-weight: 500;
+		padding: 0.5rem 1rem;
+		border-radius: 0.5rem;
+		transition: all 0.2s;
+	}
+	.btn-secondary:hover { 
+		background-color: #d3dfc3 !important; 
+	}
+	.card { @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6; }
+	.input-field { @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent; }
+	
+	/* Force primary color for all primary buttons */
+	.bg-primary-500 { background-color: #4F6C3C !important; }
+	.bg-primary-600 { background-color: #3f5630 !important; }
+	.text-primary-500 { color: #4F6C3C !important; }
+	.text-primary-600 { color: #3f5630 !important; }
+	.text-primary-700 { color: #2f4024 !important; }
+	.bg-primary-100 { background-color: #e1e9db !important; }
+	.border-primary-500 { border-color: #4F6C3C !important; }
+	.hover\:bg-primary-600:hover { background-color: #3f5630 !important; }
+	.hover\:bg-primary-700:hover { background-color: #2f4024 !important; }
+	.hover\:text-primary-500:hover { color: #4F6C3C !important; }
+	.hover\:text-primary-600:hover { color: #3f5630 !important; }
+}
