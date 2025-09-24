@@ -1,6 +1,6 @@
 import { Trophy, Mail, Phone, MapPin } from 'lucide-react';
 // import ThahbeebLogo from '../../assets/Thahbeeb Logo.png';
-import FooterLogo from '../../assets/Footer Logo.png';
+import FooterLogo from '../../assets/Footer logo.png';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
