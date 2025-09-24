@@ -72,7 +72,7 @@ const Footer = () => {
 
         <div className="border-t border-white mt-8 pt-8 text-center">
           <p className="text-white">
-            © 2025 Arts Fest. All rights reserved. | Developed by <a href="www.linkedin.com/in/hudaif121" className="text-white hover:text-white transition-colors">Muhammed Hudaifath</a>
+            © 2025 Arts Fest. All rights reserved. | A <a href="https://www.instagram.com/bidayaclassunion?igsh=YmtkNTVmNXlyenR1" className="text-white hover:text-white transition-colors">Bidaya</a> initiative · Designed & developed by <a href="www.linkedin.com/in/hudaif121" className="text-white hover:text-white transition-colors">Muhammed Hudaifath</a>.
           </p>
         </div>
       </div>
