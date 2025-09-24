@@ -55,7 +55,7 @@ const ItemSheet = () => {
       }
     });
 
-  const categories = ['all', 'music', 'dance', 'drama', 'art', 'literature', 'sports', 'other'];
+  const categories = ['all', 'Sub-Junior', 'Junior', 'Senior'];
   const types = ['all', 'solo', 'group'];
   const sortOptions = [{ value: 'date', label: 'Date' }, { value: 'name', label: 'Name' }, { value: 'category', label: 'Category' }];
 
@@ -68,7 +68,7 @@ const ItemSheet = () => {
       <div className="card mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-2"><div className="relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" /><input type="text" placeholder="Search competitions..." className="input-field pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div></div>
-          <div><select className="input-field" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>{categories.map((c) => (<option key={c} value={c}>{c === 'all' ? 'All Categories' : c.charAt(0).toUpperCase() + c.slice(1)}</option>))}</select></div>
+          <div><select className="input-field" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>{categories.map((c) => (<option key={c} value={c}>{c === 'all' ? 'All Categories' : c}</option>))}</select></div>
           <div><select className="input-field" value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>{types.map((t) => (<option key={t} value={t}>{t === 'all' ? 'All Types' : t.charAt(0).toUpperCase() + t.slice(1)}</option>))}</select></div>
         </div>
         <div className="mt-4 flex items-center space-x-4"><span className="text-sm font-medium text-gray-700">Sort by:</span><div className="flex space-x-2">{sortOptions.map((o) => (<button key={o.value} onClick={() => setSortBy(o.value)} className={`px-3 py-1 text-sm rounded-md transition-colors ${sortBy === o.value ? 'bg-primary-100 text-primary-600' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}>{o.label}</button>))}</div></div>
