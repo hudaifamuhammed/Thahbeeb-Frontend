@@ -151,7 +151,7 @@ const Home = () => {
           <div className="flex-1 flex flex-col justify-center items-start text-left py-6 md:pl-8">
             <h2 className="text-4xl md:text-5xl font-bold text-[#487437] mb-3 leading-tight drop-shadow-lg" style={{fontFamily: 'Karlos DEMO, sans-serif'}}>
               Thahbeeb<br />
-              Najatah Arts Fest
+              Najath Arts Fest
             </h2>
             <p className="text-lg md:text-xl text-gray-700 max-w-xl mb-6">
               Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset
