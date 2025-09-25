@@ -58,11 +58,11 @@ const GalleryManagement = () => {
       } else {
         if (!file) { setSubmitting(false); return; }
         const fd = new FormData();
-        fd.append('file', file);
+        fd.append('media', file); // <-- changed from 'file' to 'media'
         fd.append('caption', formData.caption);
         fd.append('type', formData.type);
         fd.append('category', formData.category);
-        await apiPostForm('/api/gallery', fd);
+        await apiPostForm('/api/gallery/upload', fd); // <-- changed endpoint
       }
       setShowModal(false);
       setFormData({ caption: '', type: 'image', category: 'general' });
