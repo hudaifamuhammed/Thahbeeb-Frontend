@@ -14,6 +14,7 @@ const GalleryManagement = () => {
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   useEffect(() => {
     fetchGalleryItems();
@@ -76,6 +77,14 @@ const GalleryManagement = () => {
     }
   };
 
+  const filteredGalleryItems = galleryItems.filter(item => {
+    const matchesType = formData.type === 'all' || item.type === formData.type;
+    const matchesCategory =
+      selectedCategory === 'all' ||
+      (item.category && item.category.toLowerCase() === selectedCategory.toLowerCase());
+    return matchesType && matchesCategory;
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -98,14 +107,14 @@ const GalleryManagement = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {galleryItems.length === 0 ? (
+        {filteredGalleryItems.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <Image className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No media yet</h3>
             <p className="text-gray-600">Click Add Media to upload images or videos.</p>
           </div>
         ) : (
-          galleryItems.map((item) => (
+          filteredGalleryItems.map((item) => (
             <div key={item._id || item.id} className="card">
               <div className="relative mb-4">
                 {item.type === 'image' ? (
