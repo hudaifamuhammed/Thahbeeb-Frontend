@@ -39,12 +39,7 @@ const ItemSheet = () => {
     return colors[category] || colors.other;
   };
 
-  const filteredItems = items.filter(item => {
-    if (selectedCategory === 'All Categories') return true;
-    return item.category === selectedCategory;
-  });
-
-  const filteredAndSortedItems = filteredItems
+  const filteredAndSortedItems = items
     .filter((item) => {
       const matchesSearch = (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || item.venue?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
