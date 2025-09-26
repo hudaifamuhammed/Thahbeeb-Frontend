@@ -121,8 +121,7 @@ const Home = () => {
   }
 
   return (
-    <>
-
+    <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
       <section
         className="w-full min-h-[60vh] md:min-h-[80vh] bg-cover bg-center relative flex items-center justify-center"
@@ -257,7 +256,7 @@ const Home = () => {
 
       {/* News section remains unchanged */}
       
-    </>
+    </div>
   );
 };
 
