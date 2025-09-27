@@ -73,9 +73,9 @@ const Home = () => {
 
   // Example stats
   const stats = [
-    { label: 'Candidates', value: 30, suffix: '+', color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Candidates', value: 60, suffix: '+', color: 'text-orange-600', bg: 'bg-orange-50' },
     { label: 'Teams', value: 2, suffix: '', color: 'text-cyan-600', bg: 'bg-cyan-50' },
-    { label: 'Programs', value: 115, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Programs', value: 104, color: 'text-blue-600', bg: 'bg-blue-50' },
     // { label: 'States', value: 20, suffix: '+', color: 'text-rose-600', bg: 'bg-rose-50' },
   ];
   const [news, setNews] = useState([]);
