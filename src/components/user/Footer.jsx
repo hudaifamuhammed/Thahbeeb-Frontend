@@ -17,10 +17,10 @@ const Footer = () => {
                 className="h-20 w-auto"
               />
             </div>
-            <p className="text-white">
+            {/* <p className="text-white">
               Celebrating creativity, talent, and artistic expression in our annual college arts festival. 
               Join us for an unforgettable experience of music, dance, drama, and visual arts.
-            </p>
+            </p> */}
           </div>
 
           {/* Quick Links */}

@@ -153,7 +153,7 @@ const Home = () => {
               Najath Arts Fest
             </h2>
             <p className="text-lg md:text-xl text-gray-700 max-w-xl mb-6">
-              Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset
+            Tahbeeb is the annual arts festival of Najath Quran Academy, organized by the Najath Students Union. Now stepping into its fifth season under the title Sajanjal, the festival serves as a vibrant platform for nurturing creativity and artistic expression among students. With a vision to inspire and develop the artistic consciousness of children, Tahbeeb celebrates talent, culture, and imagination in its finest form.
             </p>
             {/* <button className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#e94b5a] text-white font-semibold shadow hover:bg-[#c43c4a] transition-all">
               View More
