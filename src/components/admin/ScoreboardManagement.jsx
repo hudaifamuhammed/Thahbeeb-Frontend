@@ -25,6 +25,14 @@ const ScoreboardManagement = () => {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const enumCategories = ['Super-Senior', 'Senior', 'Junior'];
   const categories = ['All', ...enumCategories];
+  const normalizeEnumCategory = (raw) => {
+    const v = (raw || '').toString().trim().toLowerCase();
+    if (!v) return '';
+    if (v.includes('super') && v.includes('senior')) return 'Super-Senior';
+    if (v.includes('senior')) return 'Senior';
+    if (v.includes('junior')) return 'Junior';
+    return raw;
+  };
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState(null);
   const [publishing, setPublishing] = useState(false);
@@ -88,7 +96,8 @@ const ScoreboardManagement = () => {
 
   const handleInputChange = async (e) => {
     const { name, value, type, checked } = e.target;
-    const next = { ...formData, [name]: type === 'checkbox' ? checked : value };
+    const coerced = name === 'category' ? normalizeEnumCategory(value) : value;
+    const next = { ...formData, [name]: type === 'checkbox' ? checked : coerced };
     setFormData(next);
   };
 
@@ -328,7 +337,7 @@ const ScoreboardManagement = () => {
                           setEditing(score); 
                           setFormData({ 
                             itemId: score.itemId || '', 
-                            category: score.category || '',
+                            category: normalizeEnumCategory(score.category || ''),
                             isGroupEvent: score.isGroupEvent || false,
                             positions: score.positions || [{ teamId: '', participantName: '', position: 1, points: 0 }],
                             remarks: score.remarks || '' 
