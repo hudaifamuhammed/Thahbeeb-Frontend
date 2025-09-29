@@ -23,7 +23,8 @@ const ScoreboardManagement = () => {
   const [participants, setParticipants] = useState([]);
   const [allParticipants, setAllParticipants] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState('All');
-  const categories = ['All', ...Array.from(new Set(items.map(i => i.category).filter(Boolean))).sort((a, b) => a.localeCompare(b))];
+  const enumCategories = ['Super-Senior', 'Senior', 'Junior'];
+  const categories = ['All', ...enumCategories];
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState(null);
   const [publishing, setPublishing] = useState(false);
@@ -355,8 +356,8 @@ const ScoreboardManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
                   <select name="category" required={!formData.isGroupEvent} disabled={formData.isGroupEvent} className="input-field" value={formData.category} onChange={handleInputChange}>
                     <option value="">Select category</option>
-                    {categories.filter(c => c !== 'All').map(c => (
-                      <option key={c}>{c}</option>
+                    {enumCategories.map(c => (
+                      <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                   <div className="mt-2 flex items-center space-x-2">
