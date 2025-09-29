@@ -192,9 +192,9 @@ const ScoreboardManagement = () => {
           <label className="text-sm text-gray-700">Filter by category:</label>
           <select className="input-field w-44" value={categoryFilter} onChange={async (e) => { setCategoryFilter(e.target.value); setLoading(true); await fetchData(); setLoading(false); }}>
             <option>All</option>
-            <option>Sub-Junior</option>
-            <option>Junior</option>
+            <option>Super-Senior</option>
             <option>Senior</option>
+            <option>Junior</option>
           </select>
         </div>
         {teamTotals.length === 0 ? (
@@ -355,9 +355,9 @@ const ScoreboardManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
                   <select name="category" required={!formData.isGroupEvent} disabled={formData.isGroupEvent} className="input-field" value={formData.category} onChange={handleInputChange}>
                     <option value="">Select category</option>
-                    <option>Sub-Junior</option>
-                    <option>Junior</option>
+                    <option>Super-Senior</option>
                     <option>Senior</option>
+                    <option>Junior</option>
                   </select>
                   <div className="mt-2 flex items-center space-x-2">
                     <input id="isGroup" type="checkbox" name="isGroupEvent" checked={formData.isGroupEvent} onChange={handleInputChange} />

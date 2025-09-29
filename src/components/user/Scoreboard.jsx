@@ -115,9 +115,9 @@ const Scoreboard = () => {
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="All">All Categories</option>
-            <option value="Sub-Junior">Sub-Junior</option>
-            <option value="Junior">Junior</option>
+            <option value="Super-Senior">Super-Senior</option>
             <option value="Senior">Senior</option>
+            <option value="Junior">Junior</option>
             <option value="Group">Group Events</option>
           </select>
         </div>
@@ -196,9 +196,9 @@ const Scoreboard = () => {
                       <tr key={score._id || score.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            score.category === 'Sub-Junior' ? 'bg-blue-100 text-blue-800' :
-                            score.category === 'Junior' ? 'bg-green-100 text-green-800' :
+                            score.category === 'Super-Senior' ? 'bg-red-100 text-red-800' :
                             score.category === 'Senior' ? 'bg-purple-100 text-purple-800' :
+                            score.category === 'Junior' ? 'bg-green-100 text-green-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
                             {score.category || 'Group'}

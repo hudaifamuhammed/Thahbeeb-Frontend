@@ -55,7 +55,7 @@ const ItemSheet = () => {
       }
     });
 
-  const categories = ['all', 'Sub-Junior', 'Junior', 'Senior'];
+  const categories = ['all', 'Super-Senior', 'Senior', 'Junior'];
   const types = ['all', 'solo', 'group'];
   const sortOptions = [{ value: 'date', label: 'Date' }, { value: 'name', label: 'Name' }, { value: 'category', label: 'Category' }];
 

@@ -159,7 +159,7 @@ const ItemSheetManagement = () => {
   const getTypeColor = (type) => (type === 'solo' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800');
 
   const getCategoryColor = (category) => {
-    const colors = { 'sub-junior': 'bg-purple-100 text-purple-800', 'junior': 'bg-pink-100 text-pink-800', 'senior': 'bg-orange-100 text-orange-800' };
+    const colors = { 'super-senior': 'bg-red-100 text-red-800', 'senior': 'bg-orange-100 text-orange-800', 'junior': 'bg-pink-100 text-pink-800' };
     return colors[category] || colors['other'];
   };
 
@@ -243,9 +243,9 @@ const ItemSheetManagement = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
                     <select name="category" required className="input-field" value={formData.category} onChange={handleInputChange}>
                       <option value="">Select category</option>
-                      <option value="sub-junior">Sub Junior</option>
-                      <option value="junior">Junior</option>
+                      <option value="super-senior">Super-Senior</option>
                       <option value="senior">Senior</option>
+                      <option value="junior">Junior</option>
                     </select>
                   </div>
                   <div>
