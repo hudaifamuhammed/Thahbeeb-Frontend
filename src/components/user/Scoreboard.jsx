@@ -9,6 +9,7 @@ const Scoreboard = () => {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('teams');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const categories = ['All', ...Array.from(new Set(items.map(i => i.category).filter(Boolean))).sort((a, b) => a.localeCompare(b)), 'Group'];
 
   useEffect(() => { fetchData(); }, [categoryFilter]);
 
@@ -114,11 +115,9 @@ const Scoreboard = () => {
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <option value="All">All Categories</option>
-            <option value="Super-Senior">Super-Senior</option>
-            <option value="Senior">Senior</option>
-            <option value="Junior">Junior</option>
-            <option value="Group">Group Events</option>
+            {categories.map(c => (
+              <option key={c} value={c}>{c === 'All' ? 'All Categories' : (c === 'Group' ? 'Group Events' : c)}</option>
+            ))}
           </select>
         </div>
       </div>

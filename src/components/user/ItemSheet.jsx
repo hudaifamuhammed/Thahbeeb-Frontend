@@ -55,7 +55,7 @@ const ItemSheet = () => {
       }
     });
 
-  const categories = ['all', 'Super-Senior', 'Senior', 'Junior'];
+  const categories = ['all', ...Array.from(new Set(items.map(i => i.category).filter(Boolean))).sort((a, b) => a.localeCompare(b))];
   const types = ['all', 'solo', 'group'];
   const sortOptions = [{ value: 'date', label: 'Date' }, { value: 'name', label: 'Name' }, { value: 'category', label: 'Category' }];
 
