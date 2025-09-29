@@ -379,9 +379,10 @@ const ScoreboardManagement = () => {
                     <div className="space-y-3">
                       {formData.positions.map((position, index) => {
                         // Filter participants by selected team and category
+                        const selectedCat = (formData.category || '').toString().trim().toLowerCase();
                         const filteredParticipants = allParticipants.filter(p => 
                           p.teamId === position.teamId && 
-                          p.category === formData.category
+                          (p.category || '').toString().trim().toLowerCase() === selectedCat
                         );
                         
                          return (
