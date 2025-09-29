@@ -15,7 +15,7 @@ const Scoreboard = () => {
   const fetchData = async () => {
     try {
       const [scoresList, teamsList, itemsList] = await Promise.all([
-        apiGet(`/api/scores${categoryFilter !== 'All' ? `?category=${encodeURIComponent(categoryFilter)}` : ''}`),
+        apiGet(`/api/scores${categoryFilter !== 'All' ? `?category=${encodeURIComponent(categoryFilter)}` : ''}${categoryFilter !== 'All' ? '&' : '?'}published=true`),
         apiGet('/api/teams'),
         apiGet('/api/items')
       ]);

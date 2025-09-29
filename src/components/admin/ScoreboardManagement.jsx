@@ -25,6 +25,7 @@ const ScoreboardManagement = () => {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -45,6 +46,18 @@ const ScoreboardManagement = () => {
       console.error('Error fetching data:', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePublishAll = async () => {
+    try {
+      setPublishing(true);
+      await apiPost('/api/scores/publish', { published: true });
+      await fetchData();
+    } catch (e) {
+      console.error('Publish failed', e);
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -159,10 +172,16 @@ const ScoreboardManagement = () => {
           <h1 className="text-2xl font-bold text-gray-900">Scoreboard Management</h1>
           <p className="text-gray-600">Manage scores and track team standings</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary flex items-center space-x-2">
+        <div className="flex items-center gap-2">
+          <button onClick={handlePublishAll} disabled={publishing} className="btn-secondary flex items-center space-x-2">
+            <Trophy className="h-5 w-5" />
+            <span>{publishing ? 'Publishing...' : 'Publish to Live'}</span>
+          </button>
+          <button onClick={() => setShowModal(true)} className="btn-primary flex items-center space-x-2">
           <Plus className="h-5 w-5" />
           <span>Add Score</span>
-        </button>
+          </button>
+        </div>
       </div>
 
       <div className="card">
