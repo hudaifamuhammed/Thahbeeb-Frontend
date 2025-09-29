@@ -23,7 +23,7 @@ const ScoreboardManagement = () => {
   const [participants, setParticipants] = useState([]);
   const [allParticipants, setAllParticipants] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState('All');
-  const enumCategories = ['Super-Senior', 'Senior', 'Junior'];
+  const enumCategories = ['Super-Senior', 'Senior', 'Junior', 'General'];
   const categories = ['All', ...enumCategories];
   const normalizeEnumCategory = (raw) => {
     const v = (raw || '').toString().trim().toLowerCase();
@@ -31,6 +31,7 @@ const ScoreboardManagement = () => {
     if (v.includes('super') && v.includes('senior')) return 'Super-Senior';
     if (v.includes('senior')) return 'Senior';
     if (v.includes('junior')) return 'Junior';
+    if (v.includes('general')) return 'General';
     return raw;
   };
   const [submitting, setSubmitting] = useState(false);
