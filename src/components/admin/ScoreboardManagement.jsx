@@ -383,7 +383,7 @@ const ScoreboardManagement = () => {
                     ))}
                   </select>
                 </div>
-                {!formData.isGroupEvent && (
+                {!formData.isGroupEvent && formData.category !== 'General' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Positions *</label>
                     <div className="space-y-3">
@@ -464,6 +464,69 @@ const ScoreboardManagement = () => {
                            </div>
                          );
                       })}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newPositions = [...formData.positions, { 
+                            teamId: '',
+                            participantName: '', 
+                            position: formData.positions.length + 1, 
+                            points: 0 
+                          }];
+                          setFormData({ ...formData, positions: newPositions });
+                        }}
+                        className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 text-sm"
+                      >
+                        + Add Position
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {!formData.isGroupEvent && formData.category === 'General' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Positions *</label>
+                    <div className="space-y-3">
+                      {formData.positions.map((position, index) => (
+                        <div key={index} className="grid grid-cols-3 gap-3 p-3 border border-gray-200 rounded-lg">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Position</label>
+                            <select 
+                              value={position.position} 
+                              onChange={(e) => handlePositionChange(index, 'position', parseInt(e.target.value))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            >
+                              <option value={1}>1st Place</option>
+                              <option value={2}>2nd Place</option>
+                              <option value={3}>3rd Place</option>
+                              <option value={4}>4th Place</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Team</label>
+                            <select 
+                              value={position.teamId} 
+                              onChange={(e) => handlePositionChange(index, 'teamId', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            >
+                              <option value="">Select team</option>
+                              {teams.map((team) => (
+                                <option key={team._id || team.id} value={team._id || team.id}>{team.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Points</label>
+                            <input 
+                              type="number" 
+                              min="0" 
+                              value={position.points} 
+                              onChange={(e) => handlePositionChange(index, 'points', parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      ))}
                       <button
                         type="button"
                         onClick={() => {

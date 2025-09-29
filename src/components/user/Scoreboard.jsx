@@ -53,6 +53,7 @@ const Scoreboard = () => {
   const calculateIndividualTotals = () => {
     const totals = {};
     scores.forEach((s) => {
+      if (s.category === 'General') return; // skip general for individual totals
       // Handle new positions structure
       if (s.positions && s.positions.length > 0) {
         s.positions.forEach((pos) => {
