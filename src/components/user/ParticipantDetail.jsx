@@ -42,9 +42,13 @@ const ParticipantDetail = () => {
         }
       }
 
-      // Calculate participant's scores
+      // Calculate participant's scores (only solo items for individual achievements)
       const participantScoresList = [];
       scoresList.forEach((score) => {
+        // Find the item to check its type
+        const item = itemsList.find(i => (i._id || i.id) === score.itemId);
+        if (!item || item.type !== 'solo') return; // only include solo items for individual achievements
+        
         if (score.positions && score.positions.length > 0) {
           score.positions.forEach((pos) => {
             if (pos.teamId === teamId && pos.participantName === decodeURIComponent(participantName)) {

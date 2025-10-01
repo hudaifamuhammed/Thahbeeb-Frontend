@@ -56,6 +56,11 @@ const Scoreboard = () => {
     const totals = {};
     scores.forEach((s) => {
       if (s.category === 'General') return; // skip general for individual totals
+      
+      // Find the item to check its type
+      const item = items.find(i => (i._id || i.id) === s.itemId);
+      if (!item || item.type !== 'solo') return; // only include solo items for individual totals
+      
       // Handle new positions structure
       if (s.positions && s.positions.length > 0) {
         s.positions.forEach((pos) => {
