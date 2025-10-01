@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../lib/api';
-import { Trophy, Medal, Star, Users, Calendar } from 'lucide-react';
+import { Trophy, Medal, Star, Users, Calendar, Eye } from 'lucide-react';
 
 const Scoreboard = () => {
+  const navigate = useNavigate();
   const [scores, setScores] = useState([]);
   const [teams, setTeams] = useState([]);
   const [items, setItems] = useState([]);
@@ -88,6 +90,10 @@ const Scoreboard = () => {
   const getItemName = (itemId) => {
     const item = items.find((i) => (i._id || i.id) === itemId);
     return item ? item.name : 'Unknown Item';
+  };
+
+  const handleViewAllParticipant = (teamId, participantName) => {
+    navigate(`/scoreboard/participant/${teamId}/${encodeURIComponent(participantName)}`);
   };
 
   if (loading) return (<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>);
@@ -266,7 +272,16 @@ const Scoreboard = () => {
                 
                 {/* Show recent achievements */}
                 <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Achievements</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium text-gray-700">Recent Achievements</h4>
+                    <button
+                      onClick={() => handleViewAllParticipant(participant.teamId, participant.participantName)}
+                      className="flex items-center space-x-1 text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span>View All</span>
+                    </button>
+                  </div>
                   <div className="space-y-1">
                     {participant.scores.slice(0, 3).map((score, scoreIndex) => {
                       const item = items.find(i => (i._id || i.id) === score.itemId);

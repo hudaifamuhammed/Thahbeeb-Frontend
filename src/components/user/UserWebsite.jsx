@@ -3,6 +3,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import Home from './Home';
 import Scoreboard from './Scoreboard';
+import ParticipantDetail from './ParticipantDetail';
 import News from './News';
 import ItemSheet from './ItemSheet';
 import Gallery from './Gallery';
@@ -16,6 +17,7 @@ const UserWebsite = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/scoreboard" element={<Scoreboard />} />
+          <Route path="/scoreboard/participant/:teamId/:participantName" element={<ParticipantDetail />} />
           <Route path="/news" element={<News />} />
           <Route path="/items" element={<ItemSheet />} />
           <Route path="/gallery" element={<Gallery />} />
