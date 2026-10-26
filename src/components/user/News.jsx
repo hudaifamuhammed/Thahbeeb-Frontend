@@ -10,12 +10,33 @@ const News = () => {
   const [selectedPriority, setSelectedPriority] = useState('all');
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [availableYears, setAvailableYears] = useState([2026, 2025]);
+  const [selectedYear, setSelectedYear] = useState(2026);
 
-  useEffect(() => { fetchNews(); }, []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const years = await apiGet('/api/teams/years');
+        if (Array.isArray(years) && years.length > 0) {
+          setAvailableYears(years);
+          setSelectedYear(years[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load years:', err);
+      }
+    })();
+  }, []);
+
+  useEffect(() => { 
+    if (selectedYear) {
+      fetchNews(); 
+    }
+  }, [selectedYear]);
 
   const fetchNews = async () => {
+    setLoading(true);
     try {
-      const list = await apiGet('/api/news');
+      const list = await apiGet(`/api/news?year=${selectedYear}`);
       setNews(list || []);
     } catch (_) {
       setNews([]);
@@ -84,6 +105,19 @@ const News = () => {
                   onChange={(e) => setSearchTerm(e.target.value)} 
                 />
               </div>
+            </div>
+            <div className="lg:w-48">
+              <select 
+                className="w-full px-4 py-3 border border-primary-400 font-semibold text-primary-900 bg-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm" 
+                value={selectedYear} 
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+              >
+                {availableYears.map((y) => (
+                  <option key={y} value={y}>
+                    {y} Fest {y === availableYears[0] ? '(Current)' : '(Archive)'}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="lg:w-48">
               <select 

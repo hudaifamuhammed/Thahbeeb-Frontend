@@ -6,8 +6,11 @@ const TeamManagement = () => {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [selectedYear, setSelectedYear] = useState('All');
+  const [availableYears, setAvailableYears] = useState([2026, 2025]);
   const [formData, setFormData] = useState({
     name: '',
+    year: 2025,
     captainName: '',
     captainEmail: '',
     captainPhone: '',
@@ -18,12 +21,28 @@ const TeamManagement = () => {
   const [excelFile, setExcelFile] = useState(null);
 
   useEffect(() => {
-    fetchTeams();
+    loadYears();
   }, []);
+
+  useEffect(() => {
+    fetchTeams();
+  }, [selectedYear]);
+
+  const loadYears = async () => {
+    try {
+      const years = await apiGet('/api/teams/years');
+      if (Array.isArray(years) && years.length > 0) {
+        setAvailableYears(years);
+      }
+    } catch (e) {
+      console.error('Error fetching years:', e);
+    }
+  };
 
   const fetchTeams = async () => {
     try {
-      const data = await apiGet('/api/teams');
+      const endpoint = selectedYear !== 'All' ? `/api/teams?year=${selectedYear}` : '/api/teams';
+      const data = await apiGet(endpoint);
       console.log('Fetched teams:', data);
       setTeams(data || []);
     } catch (error) {
@@ -90,18 +109,45 @@ const TeamManagement = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Team Management</h1>
           <p className="text-gray-600">Manage teams and their member details</p>
         </div>
-        <button
-          onClick={() => { setEditing(null); setFormData({ name: '', captainName: '', captainEmail: '', captainPhone: '', description: '' }); setExcelFile(null); setShowModal(true); }}
-          className="btn-primary flex items-center space-x-2"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Add Team</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-600">Edition:</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value === 'All' ? 'All' : Number(e.target.value))}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white font-medium"
+            >
+              <option value="All">All Editions</option>
+              {availableYears.map(y => (
+                <option key={y} value={y}>{y} Fest</option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={() => { 
+              setEditing(null); 
+              setFormData({ 
+                name: '', 
+                year: selectedYear !== 'All' ? Number(selectedYear) : new Date().getFullYear(),
+                captainName: '', 
+                captainEmail: '', 
+                captainPhone: '', 
+                description: '' 
+              }); 
+              setExcelFile(null); 
+              setShowModal(true); 
+            }}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Add Team</span>
+          </button>
+        </div>
       </div>
 
       {/* Teams Grid */}
@@ -114,7 +160,14 @@ const TeamManagement = () => {
                   <Users className="h-6 w-6 text-primary-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{team.name}</h3>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-semibold text-gray-900">{team.name}</h3>
+                    {team.year && (
+                      <span className="bg-primary-100 text-primary-800 text-xs px-2 py-0.5 rounded-full font-semibold">
+                        {team.year}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-600">Captain: {team.captainName}</p>
                 </div>
               </div>
@@ -256,6 +309,21 @@ const TeamManagement = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="Enter team name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Festival Year / Edition *
+                  </label>
+                  <input
+                    type="number"
+                    name="year"
+                    required
+                    className="input-field"
+                    value={formData.year || new Date().getFullYear()}
+                    onChange={handleInputChange}
+                    placeholder="e.g. 2025, 2026"
                   />
                 </div>
 

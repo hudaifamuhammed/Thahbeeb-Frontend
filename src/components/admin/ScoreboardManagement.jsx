@@ -37,15 +37,40 @@ const ScoreboardManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState(null);
   const [publishing, setPublishing] = useState(false);
+  const [availableYears, setAvailableYears] = useState([2026, 2025]);
+  const [selectedYear, setSelectedYear] = useState(2025);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const years = await apiGet('/api/teams/years');
+        if (Array.isArray(years) && years.length > 0) {
+          setAvailableYears(years);
+          setSelectedYear(years[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load years:', err);
+      }
+    })();
+  }, []);
+
+  useEffect(() => { 
+    if (selectedYear) {
+      fetchData(); 
+    }
+  }, [categoryFilter, selectedYear]);
 
   const fetchData = async () => {
     try {
+      const yearQuery = selectedYear ? `year=${selectedYear}` : '';
+      const catQuery = categoryFilter && categoryFilter !== 'All' ? `category=${encodeURIComponent(categoryFilter)}` : '';
+      const q = [yearQuery, catQuery].filter(Boolean).join('&');
+      const scoreUrl = `/api/scores${q ? `?${q}` : ''}`;
+
       const [scoresList, teamsList, itemsList] = await Promise.all([
-        apiGet(`/api/scores${categoryFilter && categoryFilter !== 'All' ? `?category=${encodeURIComponent(categoryFilter)}` : ''}`),
-        apiGet('/api/teams'),
-        apiGet('/api/items')
+        apiGet(scoreUrl),
+        apiGet(`/api/teams${selectedYear ? `?year=${selectedYear}` : ''}`),
+        apiGet(`/api/items${selectedYear ? `?year=${selectedYear}` : ''}`)
       ]);
       setScores(scoresList || []);
       setTeams(teamsList || []);
@@ -117,10 +142,11 @@ const ScoreboardManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault(); setSubmitting(true);
     try {
+      const payload = { ...formData, year: selectedYear };
       if (editing) {
-        await apiPut(`/api/scores/${editing._id || editing.id}`, formData);
+        await apiPut(`/api/scores/${editing._id || editing.id}`, payload);
       } else {
-        await apiPost('/api/scores', formData);
+        await apiPost('/api/scores', payload);
       }
        setFormData({ 
          itemId: '', 
@@ -179,12 +205,24 @@ const ScoreboardManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Scoreboard Management</h1>
           <p className="text-gray-600">Manage scores and track team standings</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Edition:</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="px-3 py-1.5 border border-primary-400 bg-white font-semibold text-primary-900 rounded-lg text-sm shadow-sm"
+            >
+              {availableYears.map(y => (
+                <option key={y} value={y}>{y} Fest {y === availableYears[0] ? '(Current)' : ''}</option>
+              ))}
+            </select>
+          </div>
           <button onClick={handlePublishAll} disabled={publishing} className="btn-secondary flex items-center space-x-2">
             <Trophy className="h-5 w-5" />
             <span>{publishing ? 'Publishing...' : 'Publish to Live'}</span>

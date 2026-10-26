@@ -10,12 +10,33 @@ const Gallery = () => {
   const [selectedType, setSelectedType] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [availableYears, setAvailableYears] = useState([2026, 2025]);
+  const [selectedYear, setSelectedYear] = useState(2026);
 
-  useEffect(() => { fetchGalleryItems(); }, []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const years = await apiGet('/api/teams/years');
+        if (Array.isArray(years) && years.length > 0) {
+          setAvailableYears(years);
+          setSelectedYear(years[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load years:', err);
+      }
+    })();
+  }, []);
+
+  useEffect(() => { 
+    if (selectedYear) {
+      fetchGalleryItems(); 
+    }
+  }, [selectedYear]);
 
   const fetchGalleryItems = async () => {
+    setLoading(true);
     try {
-      const list = await apiGet('/api/gallery');
+      const list = await apiGet(`/api/gallery?year=${selectedYear}`);
       setGalleryItems(list || []);
     } catch (_) {
       setGalleryItems([]);
@@ -58,11 +79,18 @@ const Gallery = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="text-center mb-8"><h1 className="text-4xl font-bold text-gray-900 mb-4">Gallery</h1><p className="text-gray-600">Photos and videos from Arts Fest 2024</p></div>
+      <div className="text-center mb-8"><h1 className="text-4xl font-bold text-gray-900 mb-4">Gallery</h1><p className="text-gray-600">Photos and videos from Thahbeeb Arts Fest</p></div>
 
       <div className="card mb-8">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1"><div className="relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" /><input type="text" placeholder="Search gallery..." className="input-field pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div></div>
+          <div className="lg:w-48">
+            <select className="input-field border-primary-400 font-semibold text-primary-900" value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
+              {availableYears.map((y) => (
+                <option key={y} value={y}>{y} Fest {y === availableYears[0] ? '(Current)' : '(Archive)'}</option>
+              ))}
+            </select>
+          </div>
           <div className="lg:w-48"><select className="input-field" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>{categories.map((c) => (<option key={c} value={c}>{c === 'all' ? 'All Categories' : c.charAt(0).toUpperCase() + c.slice(1).replace('_', ' ')}</option>))}</select></div>
           <div className="lg:w-48"><select className="input-field" value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>{types.map((t) => (<option key={t} value={t}>{t === 'all' ? 'All Types' : t.charAt(0).toUpperCase() + t.slice(1)}</option>))}</select></div>
           <div className="flex border border-gray-300 rounded-lg"><button onClick={() => setViewMode('grid')} className={`px-3 py-2 text-sm font-medium rounded-l-lg ${viewMode === 'grid' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:text-gray-900'}`}>Grid</button><button onClick={() => setViewMode('list')} className={`px-3 py-2 text-sm font-medium rounded-r-lg ${viewMode === 'list' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:text-gray-900'}`}>List</button></div>
@@ -86,7 +114,14 @@ const Gallery = () => {
                         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg"><Play className="h-8 w-8 text-white" /></div>
                       </div>
                     )}
-                    <div className="absolute top-2 right-2"><span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(item.category)}`}>{item.category}</span></div>
+                    <div className="absolute top-2 right-2 flex space-x-1">
+                      {item.year && (
+                        <span className="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full font-bold shadow">
+                          {item.year}
+                        </span>
+                      )}
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(item.category)}`}>{item.category}</span>
+                    </div>
                   </div>
                   <div className="space-y-2"><h3 className="font-medium text-gray-900 line-clamp-2">{item.caption}</h3><div className="flex items-center space-x-2 text-sm text-gray-500">{item.type === 'image' ? (<Image className="h-4 w-4" />) : (<Video className="h-4 w-4" />)}<span>{item.type}</span><span>•</span><span>{formatFileSize(item.fileSize)}</span></div><p className="text-xs text-gray-500">{formatDate(item.createdAt)}</p></div>
                   <div className="flex space-x-2 mt-4"><button onClick={() => setSelectedItem(item)} className="flex-1 btn-secondary flex items-center justify-center space-x-2"><Eye className="h-4 w-4" /><span>View</span></button><button onClick={() => handleDownload(item.url, item.fileName)} className="flex-1 btn-primary flex items-center justify-center space-x-2"><Download className="h-4 w-4" /><span>Download</span></button></div>

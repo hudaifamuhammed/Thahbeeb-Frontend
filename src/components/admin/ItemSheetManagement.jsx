@@ -24,14 +24,32 @@ const ItemSheetManagement = () => {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [availableYears, setAvailableYears] = useState([2026, 2025]);
+  const [selectedYear, setSelectedYear] = useState(2025);
 
   useEffect(() => {
-    fetchItems();
+    (async () => {
+      try {
+        const years = await apiGet('/api/teams/years');
+        if (Array.isArray(years) && years.length > 0) {
+          setAvailableYears(years);
+          setSelectedYear(years[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load years:', err);
+      }
+    })();
   }, []);
+
+  useEffect(() => {
+    if (selectedYear) {
+      fetchItems();
+    }
+  }, [selectedYear]);
 
   const fetchItems = async () => {
     try {
-      const list = await apiGet('/api/items');
+      const list = await apiGet(`/api/items?year=${selectedYear}`);
       setItems(list || []);
     } catch (_) {
       setItems([]);
@@ -48,10 +66,11 @@ const ItemSheetManagement = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const payload = { ...formData, year: selectedYear };
       if (editing) {
-        await apiPut(`/api/items/${editing._id || editing.id}`, formData);
+        await apiPut(`/api/items/${editing._id || editing.id}`, payload);
       } else {
-        await apiPost('/api/items', formData);
+        await apiPost('/api/items', payload);
       }
       setFormData({ name: '', category: '', type: 'solo', stage: '', stageType: 'Stage', date: '', time: '', description: '', rules: '', prizes: '' });
       setShowModal(false);
@@ -93,10 +112,14 @@ const ItemSheetManagement = () => {
     try {
       const formData = new FormData();
       formData.append('file', uploadFile);
+      formData.append('year', selectedYear);
 
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
       const response = await fetch(`${API_BASE_URL}/api/items/upload`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: formData,
       });
 
@@ -173,12 +196,24 @@ const ItemSheetManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Item Sheet Management</h1>
           <p className="text-gray-600">Manage competitions and events</p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Edition:</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="px-3 py-1.5 border border-primary-400 bg-white font-semibold text-primary-900 rounded-lg text-sm shadow-sm"
+            >
+              {availableYears.map(y => (
+                <option key={y} value={y}>{y} Fest {y === availableYears[0] ? '(Current)' : ''}</option>
+              ))}
+            </select>
+          </div>
           <button onClick={downloadTemplate} className="btn-secondary flex items-center space-x-2">
             <Download className="h-5 w-5" />
             <span>Download Template</span>

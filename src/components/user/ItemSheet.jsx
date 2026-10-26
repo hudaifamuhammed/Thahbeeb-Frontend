@@ -9,12 +9,33 @@ const ItemSheet = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  const [availableYears, setAvailableYears] = useState([2026, 2025]);
+  const [selectedYear, setSelectedYear] = useState(2025);
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const years = await apiGet('/api/teams/years');
+        if (Array.isArray(years) && years.length > 0) {
+          setAvailableYears(years);
+          setSelectedYear(years[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load years:', err);
+      }
+    })();
+  }, []);
+
+  useEffect(() => { 
+    if (selectedYear) {
+      fetchItems(); 
+    }
+  }, [selectedYear]);
 
   const fetchItems = async () => {
+    setLoading(true);
     try {
-      const list = await apiGet('/api/items');
+      const list = await apiGet(`/api/items?year=${selectedYear}`);
       setItems(list || []);
     } catch (_) {
       setItems([]);
@@ -66,8 +87,15 @@ const ItemSheet = () => {
       <div className="text-center mb-8"><h1 className="text-4xl font-bold text-gray-900 mb-4">Competition Schedule</h1><p className="text-gray-600">Browse all competitions and events</p></div>
 
       <div className="card mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-2"><div className="relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" /><input type="text" placeholder="Search competitions..." className="input-field pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div></div>
+          <div>
+            <select className="input-field border-primary-400 font-medium text-primary-900" value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
+              {availableYears.map((y) => (
+                <option key={y} value={y}>{y} Edition {y === availableYears[0] ? '(Current)' : '(Archive)'}</option>
+              ))}
+            </select>
+          </div>
           <div><select className="input-field" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>{categories.map((c) => (<option key={c} value={c}>{c === 'all' ? 'All Categories' : c}</option>))}</select></div>
           <div><select className="input-field" value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>{types.map((t) => (<option key={t} value={t}>{t === 'all' ? 'All Types' : t.charAt(0).toUpperCase() + t.slice(1)}</option>))}</select></div>
         </div>

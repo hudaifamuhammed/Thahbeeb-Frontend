@@ -11,16 +11,38 @@ const Scoreboard = () => {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('teams');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [availableYears, setAvailableYears] = useState([2026, 2025]);
+  const [selectedYear, setSelectedYear] = useState(2025);
   const categories = ['All', ...Array.from(new Set(items.map(i => i.category).filter(Boolean))).sort((a, b) => a.localeCompare(b)), 'Group'];
 
-  useEffect(() => { fetchData(); }, [categoryFilter]);
+  // Load available years on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const years = await apiGet('/api/teams/years');
+        if (Array.isArray(years) && years.length > 0) {
+          setAvailableYears(years);
+          setSelectedYear(years[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load festival years:', err);
+      }
+    })();
+  }, []);
+
+  useEffect(() => { 
+    if (selectedYear) {
+      fetchData(); 
+    }
+  }, [categoryFilter, selectedYear]);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const [scoresList, teamsList, itemsList] = await Promise.all([
-        apiGet(`/api/scores${categoryFilter !== 'All' ? `?category=${encodeURIComponent(categoryFilter)}` : ''}${categoryFilter !== 'All' ? '&' : '?'}published=true`),
-        apiGet('/api/teams'),
-        apiGet('/api/items')
+        apiGet(`/api/scores?year=${selectedYear}${categoryFilter !== 'All' ? `&category=${encodeURIComponent(categoryFilter)}` : ''}&published=true`),
+        apiGet(`/api/teams?year=${selectedYear}`),
+        apiGet(`/api/items?year=${selectedYear}`)
       ]);
       setScores(scoresList || []);
       setTeams(teamsList || []);
@@ -120,17 +142,32 @@ const Scoreboard = () => {
           </button>
         </div>
         
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium text-gray-700">Filter by category:</label>
-          <select 
-            value={categoryFilter} 
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            {categories.map(c => (
-              <option key={c} value={c}>{c === 'All' ? 'All Categories' : (c === 'Group' ? 'Group Events' : c)}</option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Festival Edition:</label>
+            <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="px-3 py-2 border border-primary-400 bg-white text-primary-900 font-semibold rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm"
+            >
+              {availableYears.map(y => (
+                <option key={y} value={y}>{y} Fest {y === availableYears[0] ? '(Current)' : '(Archive)'}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Filter by category:</label>
+            <select 
+              value={categoryFilter} 
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              {categories.map(c => (
+                <option key={c} value={c}>{c === 'All' ? 'All Categories' : (c === 'Group' ? 'Group Events' : c)}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

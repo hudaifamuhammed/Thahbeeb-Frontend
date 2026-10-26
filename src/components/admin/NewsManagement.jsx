@@ -17,14 +17,32 @@ const NewsManagement = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [availableYears, setAvailableYears] = useState([2026, 2025]);
+  const [selectedYear, setSelectedYear] = useState('All');
+
+  useEffect(() => {
+    loadYears();
+  }, []);
 
   useEffect(() => {
     fetchNews();
-  }, []);
+  }, [selectedYear]);
+
+  const loadYears = async () => {
+    try {
+      const years = await apiGet('/api/teams/years');
+      if (Array.isArray(years) && years.length > 0) {
+        setAvailableYears(years);
+      }
+    } catch (e) {
+      console.error('Error fetching years:', e);
+    }
+  };
 
   const fetchNews = async () => {
     try {
-      const list = await apiGet('/api/news');
+      const endpoint = selectedYear !== 'All' ? `/api/news?year=${selectedYear}` : '/api/news';
+      const list = await apiGet(endpoint);
       setNews(list || []);
     } catch (_) {
       setNews([]);
@@ -60,14 +78,18 @@ const NewsManagement = () => {
     setSubmitting(true);
     try {
       console.log('Submitting news with data:', formData);
+      const payload = { 
+        ...formData, 
+        year: formData.year ? Number(formData.year) : (selectedYear !== 'All' ? Number(selectedYear) : 2026) 
+      };
       
       let newsArticle;
       if (editing) {
         console.log('Updating existing news:', editing._id || editing.id);
-        newsArticle = await apiPut(`/api/news/${editing._id || editing.id}`, formData);
+        newsArticle = await apiPut(`/api/news/${editing._id || editing.id}`, payload);
       } else {
         console.log('Creating new news');
-        newsArticle = await apiPost('/api/news', formData);
+        newsArticle = await apiPost('/api/news', payload);
       }
       
       console.log('News created/updated:', newsArticle);
@@ -77,9 +99,9 @@ const NewsManagement = () => {
         console.log('Uploading image for news:', newsArticle._id || newsArticle.id);
         setUploadingImage(true);
         try {
-          const formData = new FormData();
-          formData.append('image', imageFile);
-          const updatedNews = await apiPostForm(`/api/news/${newsArticle._id || newsArticle.id}/upload-image`, formData);
+          const fd = new FormData();
+          fd.append('image', imageFile);
+          const updatedNews = await apiPostForm(`/api/news/${newsArticle._id || newsArticle.id}/upload-image`, fd);
           console.log('Image uploaded successfully:', updatedNews);
         } catch (error) {
           console.error('Error uploading image:', error);
@@ -89,7 +111,7 @@ const NewsManagement = () => {
         }
       }
 
-      setFormData({ title: '', content: '', category: 'general', priority: 'normal' });
+      setFormData({ title: '', content: '', category: 'general', priority: 'normal', year: 2026 });
       setImageFile(null);
       setImagePreview(null);
       setShowModal(false);
@@ -145,15 +167,30 @@ const NewsManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">News Management</h1>
           <p className="text-gray-600">Manage news articles and announcements</p>
         </div>
-          <button onClick={() => { setEditing(null); setFormData({ title: '', content: '', category: 'general', priority: 'normal' }); setShowModal(true); }} className="btn-primary flex items-center space-x-2">
-          <Plus className="h-5 w-5" />
-          <span>Add News</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Edition:</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value === 'All' ? 'All' : Number(e.target.value))}
+              className="px-3 py-1.5 border border-primary-400 bg-white font-semibold text-primary-900 rounded-lg text-sm shadow-sm"
+            >
+              <option value="All">All Editions</option>
+              {availableYears.map(y => (
+                <option key={y} value={y}>{y} Fest</option>
+              ))}
+            </select>
+          </div>
+          <button onClick={() => { setEditing(null); setFormData({ title: '', content: '', category: 'general', priority: 'normal', year: selectedYear !== 'All' ? Number(selectedYear) : 2026 }); setShowModal(true); }} className="btn-primary flex items-center space-x-2">
+            <Plus className="h-5 w-5" />
+            <span>Add News</span>
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -170,6 +207,11 @@ const NewsManagement = () => {
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">{article.title}</h3>
+                    {article.year && (
+                      <span className="bg-primary-100 text-primary-800 text-xs px-2 py-0.5 rounded-full font-bold">
+                        {article.year}
+                      </span>
+                    )}
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(article.priority)}`}>
                       {article.priority}
                     </span>
@@ -201,7 +243,13 @@ const NewsManagement = () => {
                 <div className="flex space-x-2 ml-4">
                   <button className="p-2 text-gray-400 hover:text-gray-600" onClick={() => { 
                     setEditing(article); 
-                    setFormData({ title: article.title || '', content: article.content || '', category: article.category || 'general', priority: article.priority || 'normal' }); 
+                    setFormData({ 
+                      title: article.title || '', 
+                      content: article.content || '', 
+                      category: article.category || 'general', 
+                      priority: article.priority || 'normal',
+                      year: article.year || 2026 
+                    }); 
                     setImagePreview(article.imageUrl ? resolveApiUrl(article.imageUrl) : null);
                     setShowModal(true); 
                   }}>
@@ -227,7 +275,11 @@ const NewsManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Title *</label>
                   <input type="text" name="title" required className="input-field" value={formData.title} onChange={handleInputChange} placeholder="Enter news title" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Festival Year *</label>
+                    <input type="number" name="year" required className="input-field" value={formData.year || 2026} onChange={handleInputChange} placeholder="e.g. 2026" />
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
                     <select name="category" required className="input-field" value={formData.category} onChange={handleInputChange}>

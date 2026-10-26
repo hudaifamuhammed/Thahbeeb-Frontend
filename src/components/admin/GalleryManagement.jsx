@@ -15,14 +15,32 @@ const GalleryManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [availableYears, setAvailableYears] = useState([2026, 2025]);
+  const [selectedYear, setSelectedYear] = useState('All');
+
+  useEffect(() => {
+    loadYears();
+  }, []);
 
   useEffect(() => {
     fetchGalleryItems();
-  }, []);
+  }, [selectedYear]);
+
+  const loadYears = async () => {
+    try {
+      const years = await apiGet('/api/teams/years');
+      if (Array.isArray(years) && years.length > 0) {
+        setAvailableYears(years);
+      }
+    } catch (e) {
+      console.error('Error fetching years:', e);
+    }
+  };
 
   const fetchGalleryItems = async () => {
     try {
-      const list = await apiGet('/api/gallery');
+      const endpoint = selectedYear !== 'All' ? `/api/gallery?year=${selectedYear}` : '/api/gallery';
+      const list = await apiGet(endpoint);
       setGalleryItems(list || []);
     } catch (_) {
       setGalleryItems([]);
@@ -53,20 +71,27 @@ const GalleryManagement = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const targetYear = formData.year ? Number(formData.year) : (selectedYear !== 'All' ? Number(selectedYear) : 2026);
       if (editing) {
         // Only update metadata
-        await apiPut(`/api/gallery/${editing._id || editing.id}`, { caption: formData.caption, type: formData.type, category: formData.category });
+        await apiPut(`/api/gallery/${editing._id || editing.id}`, { 
+          caption: formData.caption, 
+          type: formData.type, 
+          category: formData.category,
+          year: targetYear 
+        });
       } else {
         if (!file) { setSubmitting(false); return; }
         const fd = new FormData();
-        fd.append('media', file); // <-- changed from 'file' to 'media'
+        fd.append('media', file);
         fd.append('caption', formData.caption);
         fd.append('type', formData.type);
         fd.append('category', formData.category);
-        await apiPostForm('/api/gallery/upload', fd); // <-- changed endpoint
+        fd.append('year', targetYear);
+        await apiPostForm('/api/gallery/upload', fd);
       }
       setShowModal(false);
-      setFormData({ caption: '', type: 'image', category: 'general' });
+      setFormData({ caption: '', type: 'image', category: 'general', year: 2026 });
       setFile(null);
       setEditing(null);
       await fetchGalleryItems();
@@ -95,15 +120,30 @@ const GalleryManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gallery Management</h1>
           <p className="text-gray-600">Manage photos and videos in the gallery</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary flex items-center space-x-2">
-          <Plus className="h-5 w-5" />
-          <span>Add Media</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Edition:</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value === 'All' ? 'All' : Number(e.target.value))}
+              className="px-3 py-1.5 border border-primary-400 bg-white font-semibold text-primary-900 rounded-lg text-sm shadow-sm"
+            >
+              <option value="All">All Editions</option>
+              {availableYears.map(y => (
+                <option key={y} value={y}>{y} Fest</option>
+              ))}
+            </select>
+          </div>
+          <button onClick={() => { setEditing(null); setFormData({ caption: '', type: 'image', category: 'general', year: selectedYear !== 'All' ? Number(selectedYear) : 2026 }); setShowModal(true); }} className="btn-primary flex items-center space-x-2">
+            <Plus className="h-5 w-5" />
+            <span>Add Media</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -122,7 +162,12 @@ const GalleryManagement = () => {
                 ) : (
                   <video src={resolveApiUrl(item.url)} className="w-full h-48 object-cover rounded-lg" controls preload="metadata" />
                 )}
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-2 right-2 flex space-x-1">
+                  {item.year && (
+                    <span className="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full font-bold shadow">
+                      {item.year}
+                    </span>
+                  )}
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(item.category)}`}>{item.category}</span>
                 </div>
               </div>
@@ -141,7 +186,7 @@ const GalleryManagement = () => {
                   <Download className="h-4 w-4" />
                   <span>Download</span>
                 </a>
-                <button className="p-2 text-gray-400 hover:text-gray-600" onClick={() => { setEditing(item); setFormData({ caption: item.caption || '', type: item.type || 'image', category: item.category || 'general' }); setShowModal(true); }}><Edit className="h-4 w-4" /></button>
+                <button className="p-2 text-gray-400 hover:text-gray-600" onClick={() => { setEditing(item); setFormData({ caption: item.caption || '', type: item.type || 'image', category: item.category || 'general', year: item.year || 2026 }); setShowModal(true); }}><Edit className="h-4 w-4" /></button>
                 <button onClick={async () => { try { await apiDelete(`/api/gallery/${item._id || item.id}`); await fetchGalleryItems(); } catch(_){} }} className="p-2 text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
               </div>
             </div>
@@ -158,7 +203,11 @@ const GalleryManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">{editing ? 'Replace File (optional)' : 'File *'}</label>
                   <input type="file" accept="image/*,video/*" className="input-field" onChange={(e) => setFile(e.target.files?.[0] || null)} required={!editing} />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Festival Year *</label>
+                    <input type="number" className="input-field" value={formData.year || 2026} onChange={(e) => setFormData({ ...formData, year: e.target.value })} required />
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
                     <select className="input-field" value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} required>
