@@ -59,3 +59,39 @@ export async function apiPut(path, body) {
 	if (!res.ok) throw new Error(data.error || 'Request failed');
 	return data;
 }
+
+// Generate formatted direct download URL with custom filename (Heading then Thahbeeb)
+export function getMediaDownloadUrl(url, captionOrTitle, defaultSuffix = 'Thahbeeb') {
+  if (!url) return '';
+  const fullUrl = resolveApiUrl(url);
+
+  // Clean heading/caption: remove illegal filesystem chars
+  let cleanName = (captionOrTitle || 'Media')
+    .replace(/\.[^/.]+$/, "") // strip extension if present
+    .replace(/[^\w\s-]/g, '')
+    .trim();
+
+  if (defaultSuffix && !new RegExp(`${defaultSuffix}$`, 'i').test(cleanName)) {
+    cleanName = `${cleanName} - ${defaultSuffix}`;
+  }
+
+  // Cloudinary attachment transformation with custom filename
+  if (fullUrl.includes('cloudinary.com') && fullUrl.includes('/upload/')) {
+    return fullUrl.replace('/upload/', `/upload/fl_attachment:${encodeURIComponent(cleanName)}/`);
+  }
+
+  // Backend download proxy endpoint
+  return resolveApiUrl(`/api/gallery/download?url=${encodeURIComponent(fullUrl)}&filename=${encodeURIComponent(cleanName)}`);
+}
+
+// Directly trigger download to device local storage
+export function triggerDownload(url, captionOrTitle, defaultSuffix = 'Thahbeeb') {
+  if (!url) return;
+  const downloadUrl = getMediaDownloadUrl(url, captionOrTitle, defaultSuffix);
+  const a = document.createElement('a');
+  a.href = downloadUrl;
+  a.setAttribute('download', '');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}

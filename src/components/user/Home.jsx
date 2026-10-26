@@ -13,6 +13,7 @@ import '../../assets/Karlos DEMO.otf';
 
 // Counter animation hook
 function useCounter(end, duration = 2000) {
+
   const [count, setCount] = useState(0);
   useEffect(() => {
     let start = 0;
@@ -148,12 +149,12 @@ const Home = () => {
         <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-6xl gap-8 px-4 bg-gradient-to-br from-white/90 via-white/80 to-white/90 rounded-[48px] shadow-2xl border border-gray-200" style={{ minHeight: '440px' }}>
           {/* Text Left with min padding */}
           <div className="flex-1 flex flex-col justify-center items-start text-left py-6 md:pl-8">
-            <h2 className="text-4xl md:text-5xl font-bold text-[#487437] mb-3 leading-tight drop-shadow-lg" style={{fontFamily: 'Karlos DEMO, sans-serif'}}>
+            <h2 className="text-4xl md:text-5xl font-bold text-[#487437] mb-3 leading-tight drop-shadow-lg" style={{ fontFamily: 'Karlos DEMO, sans-serif' }}>
               Thahbeeb<br />
               Najath Arts Fest
             </h2>
             <p className="text-lg md:text-xl text-gray-700 max-w-xl mb-6">
-            Tahbeeb is the annual arts festival of Najath Quran Academy, organized by the Najath Students Union. Now stepping into its fifth season under the title Sajanjal, the festival serves as a vibrant platform for nurturing creativity and artistic expression among students. With a vision to inspire and develop the artistic consciousness of children, Tahbeeb celebrates talent, culture, and imagination in its finest form.
+              Tahbeeb is the annual arts festival of Najath Quran Academy, organized by the Najath Students Union. Now stepping into its fifth season under the title Sajanjal, the festival serves as a vibrant platform for nurturing creativity and artistic expression among students. With a vision to inspire and develop the artistic consciousness of children, Tahbeeb celebrates talent, culture, and imagination in its finest form.
             </p>
             {/* <button className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#e94b5a] text-white font-semibold shadow hover:bg-[#c43c4a] transition-all">
               View More
@@ -191,7 +192,7 @@ const Home = () => {
             >
               Latest News
             </h2>
-            <p className="mt-2 text-lg/8 text-gray-700" style={{textShadow: '0 2px 8px rgba(255,255,255,0.7)'}}>
+            <p className="mt-2 text-lg/8 text-gray-700" style={{ textShadow: '0 2px 8px rgba(255,255,255,0.7)' }}>
               Stay updated with the latest announcements and updates
             </p>
           </div>
@@ -208,10 +209,10 @@ const Home = () => {
                   key={article._id || article.id}
                   className="relative isolate flex flex-col justify-end overflow-hidden rounded-2xl bg-white/80 px-8 pb-8 pt-80 sm:pt-48 lg:pt-80 shadow-lg"
                 >
-                  <img 
-                    alt="" 
-                    src={article.imageUrl ? resolveApiUrl(article.imageUrl) : `https://images.unsplash.com/photo-1496128858413-b36217c2ce36?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3603&q=80&ix=${index}`} 
-                    className="absolute inset-0 -z-10 size-full object-cover object-top rounded-2xl" 
+                  <img
+                    alt=""
+                    src={article.imageUrl ? resolveApiUrl(article.imageUrl) : `https://images.unsplash.com/photo-1496128858413-b36217c2ce36?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3603&q=80&ix=${index}`}
+                    className="absolute inset-0 -z-10 size-full object-cover rounded-2xl"
                   />
                   <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900 via-gray-900/40" />
 
@@ -249,13 +250,13 @@ const Home = () => {
               </Link>
             </div>
           )}
-            {/* Minimal space between button and footer */}
-            <div className="mb-4" />
+          {/* Minimal space between button and footer */}
+          <div className="mb-4" />
         </div>
       </section>
 
       {/* News section remains unchanged */}
-      
+
     </div>
   );
 };

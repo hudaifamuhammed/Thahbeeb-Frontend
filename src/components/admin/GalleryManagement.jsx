@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Image, Video, Edit, Trash2, Download } from 'lucide-react';
-import { apiGet, apiPostForm, apiDelete, resolveApiUrl, apiPut } from '../../lib/api';
+import { apiGet, apiPostForm, apiDelete, resolveApiUrl, apiPut, triggerDownload } from '../../lib/api';
 
 const GalleryManagement = () => {
   const [galleryItems, setGalleryItems] = useState([]);
@@ -63,7 +63,7 @@ const GalleryManagement = () => {
   };
 
   const getCategoryColor = (category) => {
-    const colors = { 'general': 'bg-gray-100 text-gray-800', 'events': 'bg-blue-100 text-blue-800', 'competitions': 'bg-green-100 text-green-800', 'awards': 'bg-yellow-100 text-yellow-800', 'behind_scenes': 'bg-purple-100 text-purple-800' };
+    const colors = { 'general': 'bg-gray-100 text-gray-800', 'events': 'bg-blue-100 text-blue-800', 'competitions': 'bg-green-100 text-green-800', 'awards': 'bg-yellow-100 text-yellow-800', 'behind_scenes': 'bg-purple-100 text-purple-800', 'stage_events': 'bg-pink-100 text-pink-800', 'off_stage_events': 'bg-purple-100 text-purple-800' };
     return colors[category] || colors['general'];
   };
 
@@ -74,11 +74,11 @@ const GalleryManagement = () => {
       const targetYear = formData.year ? Number(formData.year) : (selectedYear !== 'All' ? Number(selectedYear) : 2026);
       if (editing) {
         // Only update metadata
-        await apiPut(`/api/gallery/${editing._id || editing.id}`, { 
-          caption: formData.caption, 
-          type: formData.type, 
+        await apiPut(`/api/gallery/${editing._id || editing.id}`, {
+          caption: formData.caption,
+          type: formData.type,
           category: formData.category,
-          year: targetYear 
+          year: targetYear
         });
       } else {
         if (!file) { setSubmitting(false); return; }
@@ -182,20 +182,30 @@ const GalleryManagement = () => {
                 <p className="text-xs text-gray-500">{formatDate(item.createdAt)}</p>
               </div>
               <div className="flex space-x-2 mt-4">
-                <a href={resolveApiUrl(item.url)} download className="flex-1 btn-secondary flex items-center justify-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => triggerDownload(item.url, item.caption || item.fileName, 'Thahbeeb')}
+                  className="flex-1 btn-secondary flex items-center justify-center space-x-2"
+                >
                   <Download className="h-4 w-4" />
                   <span>Download</span>
-                </a>
+                </button>
                 <button className="p-2 text-gray-400 hover:text-gray-600" onClick={() => { setEditing(item); setFormData({ caption: item.caption || '', type: item.type || 'image', category: item.category || 'general', year: item.year || 2026 }); setShowModal(true); }}><Edit className="h-4 w-4" /></button>
-                <button onClick={async () => { try { await apiDelete(`/api/gallery/${item._id || item.id}`); await fetchGalleryItems(); } catch(_){} }} className="p-2 text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+                <button onClick={async () => { try { await apiDelete(`/api/gallery/${item._id || item.id}`); await fetchGalleryItems(); } catch (_) { } }} className="p-2 text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
               </div>
             </div>
           ))
         )}
       </div>
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">{editing ? 'Edit Media' : 'Add Media'}</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -223,6 +233,8 @@ const GalleryManagement = () => {
                       <option value="competitions">Competitions</option>
                       <option value="awards">Awards</option>
                       <option value="behind_scenes">Behind the Scenes</option>
+                      <option value="stage_events">Stage Events</option>
+                      <option value="off_stage_events">Off Stage Events</option>
                     </select>
                   </div>
                 </div>

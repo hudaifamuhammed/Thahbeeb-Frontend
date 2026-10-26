@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Users, Upload, Download, Edit, Trash2 } from 'lucide-react';
-import { apiGet, apiPost, apiDelete, apiPut, apiPostForm } from '../../lib/api';
+import { apiGet, apiPost, apiDelete, apiPut, apiPostForm, triggerDownload } from '../../lib/api';
 
 const TeamManagement = () => {
   const [teams, setTeams] = useState([]);
@@ -252,10 +252,20 @@ const TeamManagement = () => {
                   <Upload className="h-4 w-4" />
                   <span>Upload Members</span>
                 </label>
-                <a className="flex-1 btn-secondary flex items-center justify-center space-x-2" href={team.membersFileUrl || '#'} target="_blank" rel="noreferrer">
-                  <Download className="h-4 w-4" />
-                  <span>Download</span>
-                </a>
+                {team.membersFileUrl ? (
+                  <button 
+                    type="button"
+                    onClick={() => triggerDownload(team.membersFileUrl, `${team.name} Members`, 'Thahbeeb')} 
+                    className="flex-1 btn-secondary flex items-center justify-center space-x-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download</span>
+                  </button>
+                ) : (
+                  <span className="flex-1 text-center text-xs text-gray-400 py-2 border border-gray-200 rounded-md">
+                    No File
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -264,8 +274,14 @@ const TeamManagement = () => {
 
       {/* Add Team Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity"
+          onClick={() => setShowModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">{editing ? 'Edit Team' : 'Add New Team'}</h2>
               

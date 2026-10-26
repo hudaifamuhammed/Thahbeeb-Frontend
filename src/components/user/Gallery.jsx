@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { apiGet, resolveApiUrl } from '../../lib/api';
-import { Image, Video, Download, Search, Eye, Play } from 'lucide-react';
+import { apiGet, resolveApiUrl, triggerDownload } from '../../lib/api';
+import { Image, Video, Download, Search, Eye, Play, X } from 'lucide-react';
 
 const Gallery = () => {
   const [galleryItems, setGalleryItems] = useState([]);
@@ -71,8 +71,18 @@ const Gallery = () => {
   const categories = ['all', 'general', 'events', 'competitions', 'awards', 'behind_scenes'];
   const types = ['all', 'image', 'video'];
 
-  const handleDownload = (url, fileName) => {
-    const link = document.createElement('a'); link.href = resolveApiUrl(url); link.download = fileName || 'download'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = (url, caption) => {
+    if (!url) return;
+    try {
+      setDownloading(true);
+      triggerDownload(url, caption, 'Thahbeeb');
+    } catch (err) {
+      console.warn('Download error:', err);
+    } finally {
+      setTimeout(() => setDownloading(false), 800);
+    }
   };
 
   if (loading) return (<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>);
@@ -109,8 +119,8 @@ const Gallery = () => {
                     {item.type === 'image' ? (
                       <img src={resolveApiUrl(item.url)} alt={item.caption} className="w-full h-48 object-cover rounded-lg cursor-pointer" loading="lazy" decoding="async" onClick={() => setSelectedItem(item)} />
                     ) : (
-                      <div className="relative">
-                        <video src={resolveApiUrl(item.url)} className="w-full h-48 object-cover rounded-lg" controls preload="metadata" />
+                      <div className="relative cursor-pointer" onClick={() => setSelectedItem(item)}>
+                        <video src={resolveApiUrl(item.url)} className="w-full h-48 object-cover object-top rounded-lg" preload="metadata" />
                         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg"><Play className="h-8 w-8 text-white" /></div>
                       </div>
                     )}
@@ -124,12 +134,12 @@ const Gallery = () => {
                     </div>
                   </div>
                   <div className="space-y-2"><h3 className="font-medium text-gray-900 line-clamp-2">{item.caption}</h3><div className="flex items-center space-x-2 text-sm text-gray-500">{item.type === 'image' ? (<Image className="h-4 w-4" />) : (<Video className="h-4 w-4" />)}<span>{item.type}</span><span>•</span><span>{formatFileSize(item.fileSize)}</span></div><p className="text-xs text-gray-500">{formatDate(item.createdAt)}</p></div>
-                  <div className="flex space-x-2 mt-4"><button onClick={() => setSelectedItem(item)} className="flex-1 btn-secondary flex items-center justify-center space-x-2"><Eye className="h-4 w-4" /><span>View</span></button><button onClick={() => handleDownload(item.url, item.fileName)} className="flex-1 btn-primary flex items-center justify-center space-x-2"><Download className="h-4 w-4" /><span>Download</span></button></div>
+                  <div className="flex space-x-2 mt-4"><button onClick={() => setSelectedItem(item)} className="flex-1 btn-secondary flex items-center justify-center space-x-2"><Eye className="h-4 w-4" /><span>View</span></button><button onClick={() => handleDownload(item.url, item.caption || item.fileName)} disabled={downloading} className="flex-1 btn-primary flex items-center justify-center space-x-2"><Download className="h-4 w-4" /><span>Download</span></button></div>
                 </>
               ) : (
                 <>
-                  <div className="relative w-32 h-24 flex-shrink-0">{item.type === 'image' ? (<img src={resolveApiUrl(item.url)} alt={item.caption} className="w-full h-full object-cover rounded-lg cursor-pointer" loading="lazy" decoding="async" onClick={() => setSelectedItem(item)} />) : (<video src={resolveApiUrl(item.url)} className="w-full h-full object-cover rounded-lg" controls preload="metadata" />)}<div className="absolute top-1 right-1"><span className={`px-1 py-0.5 text-xs font-medium rounded ${getCategoryColor(item.category)}`}>{item.category}</span></div></div>
-                  <div className="flex-1 ml-4"><h3 className="font-medium text-gray-900 mb-2">{item.caption}</h3><div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">{item.type === 'image' ? (<Image className="h-4 w-4" />) : (<Video className="h-4 w-4" />)}<span>{item.type}</span><span>{formatFileSize(item.fileSize)}</span><span>{formatDate(item.createdAt)}</span></div><div className="flex space-x-2"><button onClick={() => setSelectedItem(item)} className="btn-secondary flex items-center space-x-2"><Eye className="h-4 w-4" /><span>View</span></button><button onClick={() => handleDownload(item.url, item.fileName)} className="btn-primary flex items-center space-x-2"><Download className="h-4 w-4" /><span>Download</span></button></div></div>
+                  <div className="relative w-32 h-24 flex-shrink-0">{item.type === 'image' ? (<img src={resolveApiUrl(item.url)} alt={item.caption} className="w-full h-full object-cover rounded-lg cursor-pointer" loading="lazy" decoding="async" onClick={() => setSelectedItem(item)} />) : (<video src={resolveApiUrl(item.url)} className="w-full h-full object-cover rounded-lg" preload="metadata" />)}<div className="absolute top-1 right-1"><span className={`px-1 py-0.5 text-xs font-medium rounded ${getCategoryColor(item.category)}`}>{item.category}</span></div></div>
+                  <div className="flex-1 ml-4"><h3 className="font-medium text-gray-900 mb-2">{item.caption}</h3><div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">{item.type === 'image' ? (<Image className="h-4 w-4" />) : (<Video className="h-4 w-4" />)}<span>{item.type}</span><span>{formatFileSize(item.fileSize)}</span><span>{formatDate(item.createdAt)}</span></div><div className="flex space-x-2"><button onClick={() => setSelectedItem(item)} className="btn-secondary flex items-center space-x-2"><Eye className="h-4 w-4" /><span>View</span></button><button onClick={() => handleDownload(item.url, item.caption || item.fileName)} disabled={downloading} className="btn-primary flex items-center space-x-2"><Download className="h-4 w-4" /><span>Download</span></button></div></div>
                 </>
               )}
             </div>
@@ -139,12 +149,72 @@ const Gallery = () => {
 
       {filteredItems.length > 0 && (<div className="mt-8 text-center text-gray-600">Showing {filteredItems.length} of {galleryItems.length} media items</div>)}
 
+      {/* Modal with backdrop click to close and uncropped full media */}
       {selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center"><h3 className="text-lg font-semibold text-gray-900">{selectedItem.caption}</h3><button onClick={() => setSelectedItem(null)} className="text-gray-400 hover:text-gray-600"><svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button></div>
-            <div className="p-4">{selectedItem.type === 'image' ? (<img src={selectedItem.url} alt={selectedItem.caption} className="max-w-full max-h-[70vh] object-contain mx-auto" loading="lazy" decoding="async" />) : (<video src={selectedItem.url} className="max-w-full max-h+[70vh]" controls autoPlay preload="metadata" />)}</div>
-            <div className="p-4 border-t border-gray-200 flex justify-between items-center"><div className="text-sm text-gray-600"><span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(selectedItem.category)}`}>{selectedItem.category}</span><span className="ml-2">{formatFileSize(selectedItem.fileSize)}</span></div><button onClick={() => handleDownload(selectedItem.url, selectedItem.fileName)} className="btn-primary flex items-center space-x-2"><Download className="h-4 w-4" /><span>Download</span></button></div>
+        <div 
+          className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 z-50 transition-opacity"
+          onClick={() => setSelectedItem(null)}
+        >
+          <div 
+            className="relative bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-4xl max-h-[90vh] my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-5 py-3.5 border-b border-gray-200 flex justify-between items-center bg-gray-50 flex-shrink-0 z-10">
+              <h3 className="text-lg font-bold text-gray-900 truncate pr-4">{selectedItem.caption}</h3>
+              <button 
+                onClick={() => setSelectedItem(null)} 
+                className="text-gray-400 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                title="Close modal"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            {/* Media Content - Full natural uncropped display with zero cut off */}
+            <div className="flex-1 min-h-0 flex items-center justify-center bg-neutral-950 p-2 sm:p-4 overflow-hidden">
+              {selectedItem.type === 'image' ? (
+                <img 
+                  src={resolveApiUrl(selectedItem.url)} 
+                  alt={selectedItem.caption} 
+                  className="max-w-full max-h-[60vh] md:max-h-[65vh] w-auto h-auto object-contain mx-auto rounded shadow-sm select-none" 
+                  loading="lazy" 
+                  decoding="async" 
+                />
+              ) : (
+                <video 
+                  src={resolveApiUrl(selectedItem.url)} 
+                  className="max-w-full max-h-[60vh] md:max-h-[65vh] w-auto h-auto object-contain mx-auto rounded shadow-sm" 
+                  controls 
+                  autoPlay 
+                  playsInline
+                  preload="metadata" 
+                />
+              )}
+            </div>
+
+            {/* Modal Footer - Always pinned & visible */}
+            <div className="px-5 py-3.5 border-t border-gray-200 flex flex-wrap gap-2 justify-between items-center bg-gray-50 flex-shrink-0 z-10">
+              <div className="text-sm text-gray-600 flex items-center space-x-2">
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(selectedItem.category)}`}>
+                  {selectedItem.category}
+                </span>
+                {selectedItem.year && (
+                  <span className="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full font-bold">
+                    {selectedItem.year} Fest
+                  </span>
+                )}
+                <span className="text-xs text-gray-500">{formatFileSize(selectedItem.fileSize)}</span>
+              </div>
+              <button 
+                onClick={() => handleDownload(selectedItem.url, selectedItem.caption || selectedItem.fileName)} 
+                disabled={downloading}
+                className="btn-primary flex items-center space-x-2 shadow-sm"
+              >
+                <Download className="h-4 w-4" />
+                <span>{downloading ? 'Downloading...' : 'Download'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
