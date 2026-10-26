@@ -170,7 +170,7 @@ const News = () => {
                 <img 
                   alt="" 
                   src={article.imageUrl ? resolveApiUrl(article.imageUrl) : `https://images.unsplash.com/photo-1496128858413-b36217c2ce36?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3603&q=80&ix=${index}`} 
-                  className="absolute inset-0 -z-10 size-full object-cover" 
+                  className="absolute inset-0 -z-10 size-full object-cover object-top" 
                 />
                 <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900 via-gray-900/40" />
                 <div className="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
@@ -223,14 +223,13 @@ const News = () => {
                 <X className="h-6 w-6 text-gray-600" />
               </button>
 
-              {/* Article Image */}
-              <div className="relative h-64 sm:h-80 lg:h-96">
+              {/* Article Image - Exact full uncropped view */}
+              <div className="relative w-full bg-slate-900/5 flex items-center justify-center p-3 rounded-t-lg">
                 <img
                   src={selectedArticle.imageUrl ? resolveApiUrl(selectedArticle.imageUrl) : `https://images.unsplash.com/photo-1496128858413-b36217c2ce36?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3603&q=80`}
                   alt={selectedArticle.title}
-                  className="w-full h-full object-cover rounded-t-lg"
+                  className="max-h-[75vh] w-auto max-w-full object-contain rounded-lg shadow-sm mx-auto"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-t-lg" />
               </div>
 
               {/* Article Content */}
