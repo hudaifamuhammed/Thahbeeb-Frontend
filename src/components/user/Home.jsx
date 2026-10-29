@@ -74,7 +74,7 @@ const Home = () => {
 
   // Example stats
   const stats = [
-    { label: 'Candidates', value: 60, suffix: '+', color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Candidates', value: 75, suffix: '+', color: 'text-orange-600', bg: 'bg-orange-50' },
     { label: 'Teams', value: 2, suffix: '', color: 'text-cyan-600', bg: 'bg-cyan-50' },
     { label: 'Programs', value: 104, color: 'text-blue-600', bg: 'bg-blue-50' },
     // { label: 'States', value: 20, suffix: '+', color: 'text-rose-600', bg: 'bg-rose-50' },
@@ -154,7 +154,7 @@ const Home = () => {
               Najath Arts Fest
             </h2>
             <p className="text-lg md:text-xl text-gray-700 max-w-xl mb-6">
-              Tahbeeb is the annual arts festival of Najath Quran Academy, organized by the Najath Students Union. Now stepping into its fifth season under the title Sajanjal, the festival serves as a vibrant platform for nurturing creativity and artistic expression among students. With a vision to inspire and develop the artistic consciousness of children, Tahbeeb celebrates talent, culture, and imagination in its finest form.
+              Thahbeeb is the annual arts festival of Najath Quran Academy, organized by the Najath Students Union. Now stepping into its Sixth season under the title SibGha, the festival serves as a vibrant platform for nurturing creativity and artistic expression among students. With a vision to inspire and develop the artistic consciousness of children, Thahbeeb celebrates talent, culture, and imagination in its finest form.
             </p>
             {/* <button className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#e94b5a] text-white font-semibold shadow hover:bg-[#c43c4a] transition-all">
               View More
