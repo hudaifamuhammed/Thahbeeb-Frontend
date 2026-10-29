@@ -11,8 +11,21 @@
 }
 
 @layer base {
-	html { font-family: 'Roboto', Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
-	body { font-family: 'Roboto', Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+	html {
+		font-family: 'Roboto', Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+		height: 100%;
+	}
+	body {
+		font-family: 'Roboto', Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+		min-height: 100%;
+		margin: 0;
+		padding: 0;
+	}
+	#root {
+		min-height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
 }
 
 @layer components {

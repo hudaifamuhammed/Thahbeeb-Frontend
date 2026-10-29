@@ -10,7 +10,7 @@ import Gallery from './Gallery';
 
 const UserWebsite = () => {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
+    <div className="min-h-screen flex-1 bg-gray-50 flex flex-col justify-between">
       <Navbar />
       
       <main className="flex-grow flex flex-col">
