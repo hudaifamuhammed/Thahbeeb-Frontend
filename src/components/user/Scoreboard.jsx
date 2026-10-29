@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../../lib/api';
+import { apiGet, getFestivalYears } from '../../lib/api';
 import { Trophy, Medal, Star, Users, Calendar, Eye } from 'lucide-react';
 
 const Scoreboard = () => {
@@ -12,22 +12,21 @@ const Scoreboard = () => {
   const [view, setView] = useState('teams');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [availableYears, setAvailableYears] = useState([2026, 2025]);
-  const [selectedYear, setSelectedYear] = useState(2025);
+  const [selectedYear, setSelectedYear] = useState(2026);
   const categories = ['All', ...Array.from(new Set(items.map(i => i.category).filter(Boolean))).sort((a, b) => a.localeCompare(b)), 'Group'];
 
   // Load available years on mount
   useEffect(() => {
-    (async () => {
-      try {
-        const years = await apiGet('/api/teams/years');
-        if (Array.isArray(years) && years.length > 0) {
-          setAvailableYears(years);
+    let isMounted = true;
+    getFestivalYears().then((years) => {
+      if (isMounted && Array.isArray(years) && years.length > 0) {
+        setAvailableYears(years);
+        if (!years.includes(selectedYear)) {
           setSelectedYear(years[0]);
         }
-      } catch (err) {
-        console.error('Failed to load festival years:', err);
       }
-    })();
+    });
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => { 
@@ -123,10 +122,14 @@ const Scoreboard = () => {
     navigate(`/scoreboard/participant/${teamId}/${encodeURIComponent(participantName)}`);
   };
 
-  if (loading) return (<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>);
+  if (loading) return (
+    <div className="flex-1 flex items-center justify-center py-24 min-h-[50vh]">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+    </div>
+  );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Live Scoreboard</h1>
         <p className="text-gray-600">Real-time updates on team and individual standings</p>

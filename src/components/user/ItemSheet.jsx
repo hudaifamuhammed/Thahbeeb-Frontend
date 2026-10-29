@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiGet } from '../../lib/api';
+import { apiGet, getFestivalYears } from '../../lib/api';
 import { Calendar, MapPin, Clock, Users, Search, Trophy } from 'lucide-react';
 
 const ItemSheet = () => {
@@ -10,20 +10,19 @@ const ItemSheet = () => {
   const [selectedType, setSelectedType] = useState('all');
   const [sortBy, setSortBy] = useState('date');
   const [availableYears, setAvailableYears] = useState([2026, 2025]);
-  const [selectedYear, setSelectedYear] = useState(2025);
+  const [selectedYear, setSelectedYear] = useState(2026);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const years = await apiGet('/api/teams/years');
-        if (Array.isArray(years) && years.length > 0) {
-          setAvailableYears(years);
+    let isMounted = true;
+    getFestivalYears().then((years) => {
+      if (isMounted && Array.isArray(years) && years.length > 0) {
+        setAvailableYears(years);
+        if (!years.includes(selectedYear)) {
           setSelectedYear(years[0]);
         }
-      } catch (err) {
-        console.error('Failed to load years:', err);
       }
-    })();
+    });
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => { 
@@ -80,10 +79,14 @@ const ItemSheet = () => {
   const types = ['all', 'solo', 'group'];
   const sortOptions = [{ value: 'date', label: 'Date' }, { value: 'name', label: 'Name' }, { value: 'category', label: 'Category' }];
 
-  if (loading) return (<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>);
+  if (loading) return (
+    <div className="flex-1 flex items-center justify-center py-24 min-h-[50vh]">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+    </div>
+  );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
       <div className="text-center mb-8"><h1 className="text-4xl font-bold text-gray-900 mb-4">Competition Schedule</h1><p className="text-gray-600">Browse all competitions and events</p></div>
 
       <div className="card mb-8">

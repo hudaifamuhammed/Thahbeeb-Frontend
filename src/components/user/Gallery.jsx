@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiGet, resolveApiUrl, triggerDownload } from '../../lib/api';
+import { apiGet, resolveApiUrl, triggerDownload, getFestivalYears } from '../../lib/api';
 import { Image, Video, Download, Search, Eye, Play, X } from 'lucide-react';
 
 const Gallery = () => {
@@ -14,17 +14,16 @@ const Gallery = () => {
   const [selectedYear, setSelectedYear] = useState(2026);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const years = await apiGet('/api/teams/years');
-        if (Array.isArray(years) && years.length > 0) {
-          setAvailableYears(years);
+    let isMounted = true;
+    getFestivalYears().then((years) => {
+      if (isMounted && Array.isArray(years) && years.length > 0) {
+        setAvailableYears(years);
+        if (!years.includes(selectedYear)) {
           setSelectedYear(years[0]);
         }
-      } catch (err) {
-        console.error('Failed to load years:', err);
       }
-    })();
+    });
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => { 
@@ -85,10 +84,14 @@ const Gallery = () => {
     }
   };
 
-  if (loading) return (<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>);
+  if (loading) return (
+    <div className="flex-1 flex items-center justify-center py-24 min-h-[50vh]">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+    </div>
+  );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
       <div className="text-center mb-8"><h1 className="text-4xl font-bold text-gray-900 mb-4">Gallery</h1><p className="text-gray-600">Photos and videos from Thahbeeb Arts Fest</p></div>
 
       <div className="card mb-8">

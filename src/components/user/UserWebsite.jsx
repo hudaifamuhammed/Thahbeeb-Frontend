@@ -10,10 +10,10 @@ import Gallery from './Gallery';
 
 const UserWebsite = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
       <Navbar />
       
-      <main>
+      <main className="flex-grow flex flex-col">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/scoreboard" element={<Scoreboard />} />

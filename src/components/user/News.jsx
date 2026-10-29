@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiGet, resolveApiUrl } from '../../lib/api';
+import { apiGet, resolveApiUrl, getFestivalYears } from '../../lib/api';
 import { Newspaper, Clock, User, Search, X } from 'lucide-react';
 
 const News = () => {
@@ -14,17 +14,16 @@ const News = () => {
   const [selectedYear, setSelectedYear] = useState(2026);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const years = await apiGet('/api/teams/years');
-        if (Array.isArray(years) && years.length > 0) {
-          setAvailableYears(years);
+    let isMounted = true;
+    getFestivalYears().then((years) => {
+      if (isMounted && Array.isArray(years) && years.length > 0) {
+        setAvailableYears(years);
+        if (!years.includes(selectedYear)) {
           setSelectedYear(years[0]);
         }
-      } catch (err) {
-        console.error('Failed to load years:', err);
       }
-    })();
+    });
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => { 
@@ -77,10 +76,14 @@ const News = () => {
   const categories = ['all', 'general', 'announcement', 'update', 'event'];
   const priorities = ['all', 'low', 'normal', 'medium', 'high'];
 
-  if (loading) return (<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>);
+  if (loading) return (
+    <div className="flex-1 flex items-center justify-center py-24 min-h-[50vh]">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+    </div>
+  );
 
   return (
-    <div className="bg-white py-24 sm:py-32">
+    <div className="bg-white py-16 sm:py-24 flex-1 w-full">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="text-balance text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">

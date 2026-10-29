@@ -80,46 +80,26 @@ const Home = () => {
     // { label: 'States', value: 20, suffix: '+', color: 'text-rose-600', bg: 'bg-rose-50' },
   ];
   const [news, setNews] = useState([]);
-  const [items, setItems] = useState([]);
-  const [scores, setScores] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [newsLoading, setNewsLoading] = useState(true);
 
-  useEffect(() => { fetchData(); }, []);
-
-  const fetchData = async () => {
-    try {
-      const [newsList, itemsList, scoresList] = await Promise.all([
-        apiGet('/api/news'),
-        apiGet('/api/items'),
-        apiGet('/api/scores')
-      ]);
-      setNews((newsList || []).slice(0, 3));
-      setItems((itemsList || []).slice(0, 6));
-      setScores(scoresList || []);
-    } catch (e) {
-      console.error('Home fetch error', e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Removed undefined calculateTopTeams() call
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  // Add Karlos DEMO font-face
-  // This will inject the font-face into the page
-  if (typeof document !== 'undefined') {
-    const style = document.createElement('style');
-    style.innerHTML = `@font-face { font-family: 'Karlos DEMO'; src: url('/src/assets/Karlos DEMO.otf') format('opentype'); font-weight: normal; font-style: normal; }`;
-    document.head.appendChild(style);
-  }
+  useEffect(() => {
+    let isMounted = true;
+    apiGet('/api/news?limit=3')
+      .then((newsList) => {
+        if (isMounted) {
+          setNews((newsList || []).slice(0, 3));
+        }
+      })
+      .catch((e) => {
+        console.error('Home news fetch error', e);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setNewsLoading(false);
+        }
+      });
+    return () => { isMounted = false; };
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -197,7 +177,11 @@ const Home = () => {
             </p>
           </div>
           <div className="mx-auto mt-16 grid max-w-2xl auto-rows-fr grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
-            {news.length === 0 ? (
+            {newsLoading ? (
+              <div className="col-span-full flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
+              </div>
+            ) : news.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 <Newspaper className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No news yet</h3>

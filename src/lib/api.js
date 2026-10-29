@@ -95,3 +95,34 @@ export function triggerDownload(url, captionOrTitle, defaultSuffix = 'Thahbeeb')
   a.click();
   document.body.removeChild(a);
 }
+
+// Cached festival years to eliminate redundant repeated requests
+let cachedYears = null;
+let cachedYearsPromise = null;
+
+export async function getFestivalYears() {
+  if (cachedYears) return cachedYears;
+  if (cachedYearsPromise) return cachedYearsPromise;
+
+  cachedYearsPromise = apiGet('/api/teams/years')
+    .then((years) => {
+      if (Array.isArray(years) && years.length > 0) {
+        cachedYears = years;
+        return years;
+      }
+      return [2026, 2025];
+    })
+    .catch((err) => {
+      console.error('Failed to load festival years:', err);
+      return [2026, 2025];
+    })
+    .finally(() => {
+      cachedYearsPromise = null;
+    });
+
+  return cachedYearsPromise;
+}
+
+export function invalidateFestivalYears() {
+  cachedYears = null;
+}
