@@ -247,12 +247,13 @@ const Scoreboard = () => {
                       <tr key={score._id || score.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            score.isGroupEvent || score.category === 'Group' ? 'bg-amber-100 text-amber-800' :
                             score.category === 'Super-Senior' ? 'bg-red-100 text-red-800' :
                             score.category === 'Senior' ? 'bg-purple-100 text-purple-800' :
                             score.category === 'Junior' ? 'bg-green-100 text-green-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {score.category || 'Group'}
+                            {score.isGroupEvent || score.category === 'Group' ? 'Group' : (score.category || 'General')}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getItemName(score.itemId)}</td>
@@ -266,8 +267,8 @@ const Scoreboard = () => {
                                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
                                       {pos.position === 1 ? '1st' : pos.position === 2 ? '2nd' : pos.position === 3 ? '3rd' : pos.position === 4 ? '4th' : `${pos.position}th`}
                                     </span>
-                                    <span className="text-sm text-gray-900">{pos.participantName}</span>
-                                    <span className="text-xs text-gray-500">({team?.name || 'Team Not Found'})</span>
+                                    {pos.participantName && <span className="text-sm text-gray-900">{pos.participantName}</span>}
+                                    <span className="text-xs text-gray-500 font-medium">({team?.name || 'Team Not Found'})</span>
                                     <span className="text-xs text-gray-500">({pos.points} pts)</span>
                                   </div>
                                 );

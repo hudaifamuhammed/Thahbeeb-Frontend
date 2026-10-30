@@ -24,7 +24,7 @@ const ScoreboardManagement = () => {
   const [allParticipants, setAllParticipants] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState('All');
   const enumCategories = ['Super-Senior', 'Senior', 'Junior', 'General'];
-  const categories = ['All', ...enumCategories];
+  const categories = ['All', ...enumCategories, 'Group'];
   const normalizeEnumCategory = (raw) => {
     const v = (raw || '').toString().trim().toLowerCase();
     if (!v) return '';
@@ -32,6 +32,7 @@ const ScoreboardManagement = () => {
     if (v.includes('senior')) return 'Senior';
     if (v.includes('junior')) return 'Junior';
     if (v.includes('general')) return 'General';
+    if (v.includes('group')) return 'Group';
     return raw;
   };
   const [submitting, setSubmitting] = useState(false);
@@ -122,9 +123,34 @@ const ScoreboardManagement = () => {
 
   const handleInputChange = async (e) => {
     const { name, value, type, checked } = e.target;
-    const coerced = name === 'category' ? normalizeEnumCategory(value) : value;
-    const next = { ...formData, [name]: type === 'checkbox' ? checked : coerced };
-    setFormData(next);
+    if (name === 'isGroupEvent') {
+      const isGroup = checked;
+      setFormData(prev => ({
+        ...prev,
+        isGroupEvent: isGroup,
+        category: isGroup ? 'Group' : '',
+        itemId: '',
+        positions: [
+          { teamId: '', participantName: '', position: 1, points: 0 },
+          { teamId: '', participantName: '', position: 2, points: 0 },
+          { teamId: '', participantName: '', position: 3, points: 0 },
+          { teamId: '', participantName: '', position: 4, points: 0 }
+        ]
+      }));
+      return;
+    }
+
+    if (name === 'category') {
+      const cat = normalizeEnumCategory(value);
+      setFormData(prev => ({
+        ...prev,
+        category: cat,
+        itemId: ''
+      }));
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handlePositionChange = (index, field, value) => {
@@ -140,45 +166,94 @@ const ScoreboardManagement = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); setSubmitting(true);
+    e.preventDefault(); 
+    setSubmitting(true);
     try {
-      const payload = { ...formData, year: selectedYear };
+      const validPositions = (formData.positions || []).filter(p => p && p.teamId);
+      if (validPositions.length === 0) {
+        alert('Please select at least one team in the positions list.');
+        setSubmitting(false);
+        return;
+      }
+
+      const payload = { 
+        ...formData, 
+        positions: validPositions,
+        category: formData.isGroupEvent ? 'Group' : (formData.category || 'General'),
+        isGroupEvent: !!formData.isGroupEvent,
+        year: selectedYear 
+      };
+
       if (editing) {
         await apiPut(`/api/scores/${editing._id || editing.id}`, payload);
       } else {
         await apiPost('/api/scores', payload);
       }
-       setFormData({ 
-         itemId: '', 
-         category: '', 
-         isGroupEvent: false, 
-         positions: [
-           { teamId: '', participantName: '', position: 1, points: 0 },
-           { teamId: '', participantName: '', position: 2, points: 0 },
-           { teamId: '', participantName: '', position: 3, points: 0 },
-           { teamId: '', participantName: '', position: 4, points: 0 }
-         ], 
-         remarks: '' 
-       });
-      setShowModal(false); setEditing(null);
+
+      setFormData({ 
+        itemId: '', 
+        category: '', 
+        isGroupEvent: false, 
+        positions: [
+          { teamId: '', participantName: '', position: 1, points: 0 },
+          { teamId: '', participantName: '', position: 2, points: 0 },
+          { teamId: '', participantName: '', position: 3, points: 0 },
+          { teamId: '', participantName: '', position: 4, points: 0 }
+        ], 
+        remarks: '' 
+      });
+      setShowModal(false); 
+      setEditing(null);
       await fetchData();
     } catch (err) {
       console.error('Error saving score:', err);
+      alert('Error saving score: ' + (err.message || 'Please check input data'));
     } finally {
       setSubmitting(false);
     }
   };
 
+  const isGroupItem = (item) => {
+    const type = (item?.type || '').toLowerCase();
+    const cat = (item?.category || '').toLowerCase();
+    return type === 'group' || cat === 'group';
+  };
+
+  const displayCompetitions = items.filter(item => {
+    const id = item._id || item.id;
+    if (formData.itemId && id === formData.itemId) return true;
+    if (formData.isGroupEvent) {
+      return isGroupItem(item);
+    }
+    if (isGroupItem(item)) return false;
+    if (!formData.category) return true;
+    return (item.category || '').toString().trim().toLowerCase() === (formData.category || '').toString().trim().toLowerCase();
+  });
+
   const calculateTeamTotals = () => {
     const teamTotals = {};
     scores.forEach((score) => {
-      const tid = score.teamId?.toString?.() || score.teamId;
-      if (!teamTotals[tid]) {
+      if (score.positions && score.positions.length > 0) {
+        score.positions.forEach(position => {
+          if (position.teamId) {
+            const tid = position.teamId.toString();
+            const team = teams.find((t) => (t._id || t.id) === tid);
+            if (team) {
+              if (!teamTotals[tid]) teamTotals[tid] = { teamName: team.name, totalPoints: 0, scores: [] };
+              teamTotals[tid].totalPoints += parseInt(position.points) || 0;
+              teamTotals[tid].scores.push(score);
+            }
+          }
+        });
+      } else if (score.teamId) {
+        const tid = score.teamId?.toString?.() || score.teamId;
         const team = teams.find((t) => (t._id || t.id) === tid);
-        teamTotals[tid] = { teamName: team?.name || 'Team Not Found', totalPoints: 0, scores: [] };
+        if (team) {
+          if (!teamTotals[tid]) teamTotals[tid] = { teamName: team.name, totalPoints: 0, scores: [] };
+          teamTotals[tid].totalPoints += parseInt(score.points) || 0;
+          teamTotals[tid].scores.push(score);
+        }
       }
-      teamTotals[tid].totalPoints += parseInt(score.points) || 0;
-      teamTotals[tid].scores.push(score);
     });
     return Object.values(teamTotals).sort((a, b) => b.totalPoints - a.totalPoints);
   };
@@ -227,7 +302,22 @@ const ScoreboardManagement = () => {
             <Trophy className="h-5 w-5" />
             <span>{publishing ? 'Publishing...' : 'Publish to Live'}</span>
           </button>
-          <button onClick={() => setShowModal(true)} className="btn-primary flex items-center space-x-2">
+          <button onClick={() => {
+            setEditing(null);
+            setFormData({ 
+              itemId: '', 
+              category: '', 
+              isGroupEvent: false, 
+              positions: [
+                { teamId: '', participantName: '', position: 1, points: 0 },
+                { teamId: '', participantName: '', position: 2, points: 0 },
+                { teamId: '', participantName: '', position: 3, points: 0 },
+                { teamId: '', participantName: '', position: 4, points: 0 }
+              ], 
+              remarks: '' 
+            });
+            setShowModal(true);
+          }} className="btn-primary flex items-center space-x-2">
           <Plus className="h-5 w-5" />
           <span>Add Score</span>
           </button>
@@ -242,7 +332,7 @@ const ScoreboardManagement = () => {
           <label className="text-sm text-gray-700">Filter by category:</label>
           <select className="input-field w-44" value={categoryFilter} onChange={async (e) => { setCategoryFilter(e.target.value); setLoading(true); await fetchData(); setLoading(false); }}>
             {categories.map(c => (
-              <option key={c}>{c}</option>
+              <option key={c} value={c}>{c === 'All' ? 'All Categories' : (c === 'Group' ? 'Group Events' : c)}</option>
             ))}
           </select>
         </div>
@@ -340,12 +430,14 @@ const ScoreboardManagement = () => {
                   <tr key={score._id || score.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        score.isGroupEvent || score.category === 'Group' ? 'bg-amber-100 text-amber-800' :
                         score.category === 'Sub-Junior' ? 'bg-blue-100 text-blue-800' :
                         score.category === 'Junior' ? 'bg-green-100 text-green-800' :
                         score.category === 'Senior' ? 'bg-purple-100 text-purple-800' :
+                        score.category === 'Super-Senior' ? 'bg-red-100 text-red-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>
-                        {score.category || 'Group'}
+                        {score.isGroupEvent || score.category === 'Group' ? 'Group' : (score.category || 'General')}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getItemName(score.itemId)}</td>
@@ -359,8 +451,8 @@ const ScoreboardManagement = () => {
                                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
                                    {pos.position === 1 ? '1st' : pos.position === 2 ? '2nd' : pos.position === 3 ? '3rd' : pos.position === 4 ? '4th' : `${pos.position}th`}
                                  </span>
-                                <span className="text-sm text-gray-900">{pos.participantName}</span>
-                                <span className="text-xs text-gray-500">({team?.name || 'Team Not Found'})</span>
+                                {pos.participantName && <span className="text-sm text-gray-900">{pos.participantName}</span>}
+                                <span className="text-xs text-gray-500 font-medium">({team?.name || 'Team Not Found'})</span>
                                 <span className="text-xs text-gray-500">({pos.points} pts)</span>
                               </div>
                             );
@@ -374,11 +466,15 @@ const ScoreboardManagement = () => {
                       <div className="flex space-x-2">
                         <button className="text-primary-600 hover:text-primary-900" onClick={() => { 
                           setEditing(score); 
+                          const isGroup = !!(score.isGroupEvent || score.category === 'Group');
                           setFormData({ 
                             itemId: score.itemId || '', 
-                            category: normalizeEnumCategory(score.category || ''),
-                            isGroupEvent: score.isGroupEvent || false,
-                            positions: score.positions || [{ teamId: '', participantName: '', position: 1, points: 0 }],
+                            category: isGroup ? 'Group' : normalizeEnumCategory(score.category || ''),
+                            isGroupEvent: isGroup,
+                            positions: score.positions && score.positions.length > 0 ? score.positions : [
+                              { teamId: '', participantName: '', position: 1, points: 0 },
+                              { teamId: '', participantName: '', position: 2, points: 0 }
+                            ], 
                             remarks: score.remarks || '' 
                           }); 
                           setShowModal(true); 
@@ -400,7 +496,7 @@ const ScoreboardManagement = () => {
           onClick={() => setShowModal(false)}
         >
           <div 
-            className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
@@ -408,8 +504,16 @@ const ScoreboardManagement = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-                  <select name="category" required={!formData.isGroupEvent} disabled={formData.isGroupEvent} className="input-field" value={formData.category} onChange={handleInputChange}>
-                    <option value="">Select category</option>
+                  <select 
+                    name="category" 
+                    required={!formData.isGroupEvent} 
+                    disabled={formData.isGroupEvent} 
+                    className="input-field" 
+                    value={formData.isGroupEvent ? 'Group' : formData.category} 
+                    onChange={handleInputChange}
+                  >
+                    <option value="">{formData.isGroupEvent ? 'Group' : 'Select category'}</option>
+                    {formData.isGroupEvent && <option value="Group">Group</option>}
                     {enumCategories.map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
@@ -422,117 +526,32 @@ const ScoreboardManagement = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Competition *</label>
                   <select name="itemId" required className="input-field" value={formData.itemId} onChange={handleInputChange}>
-                    <option value="">Select competition</option>
-                    {items.map((item) => (
-                      <option key={item._id || item.id} value={item._id || item.id}>{item.name}</option>
+                    <option value="">
+                      {formData.isGroupEvent 
+                        ? (displayCompetitions.length === 0 ? 'No group competitions found' : 'Select group competition')
+                        : (!formData.category ? 'Select category first (or select competition)' : 'Select competition')}
+                    </option>
+                    {displayCompetitions.map((item) => (
+                      <option key={item._id || item.id} value={item._id || item.id}>
+                        {item.name} {formData.isGroupEvent && item.category && item.category !== 'General' && item.category !== 'Group' ? `(${item.category})` : ''}
+                      </option>
                     ))}
                   </select>
                 </div>
-                {!formData.isGroupEvent && formData.category !== 'General' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Positions *</label>
-                    <div className="space-y-3">
-                      {formData.positions.map((position, index) => {
-                        // Filter participants by selected team and category
-                        const selectedCat = (formData.category || '').toString().trim().toLowerCase();
-                        const filteredParticipants = allParticipants.filter(p => 
-                          p.teamId === position.teamId && 
-                          (p.category || '').toString().trim().toLowerCase() === selectedCat
-                        );
-                        
-                         return (
-                           <div key={index} className="grid grid-cols-5 gap-3 p-3 border border-gray-200 rounded-lg">
-                             <div>
-                               <label className="block text-xs font-medium text-gray-600 mb-1">Position</label>
-                               <select 
-                                 value={position.position} 
-                                 onChange={(e) => handlePositionChange(index, 'position', parseInt(e.target.value))}
-                                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                               >
-                                 <option value={1}>1st Place</option>
-                                 <option value={2}>2nd Place</option>
-                                 <option value={3}>3rd Place</option>
-                                 <option value={4}>4th Place</option>
-                               </select>
-                             </div>
-                             <div>
-                               <label className="block text-xs font-medium text-gray-600 mb-1">Team</label>
-                               <select 
-                                 value={position.teamId} 
-                                 onChange={(e) => handlePositionChange(index, 'teamId', e.target.value)}
-                                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                               >
-                                 <option value="">Select team</option>
-                                 {teams.map((team) => (
-                                   <option key={team._id || team.id} value={team._id || team.id}>{team.name}</option>
-                                 ))}
-                               </select>
-                             </div>
-                             <div>
-                               <label className="block text-xs font-medium text-gray-600 mb-1">Participant</label>
-                               <select 
-                                 value={position.participantName} 
-                                 onChange={(e) => handlePositionChange(index, 'participantName', e.target.value)}
-                                 disabled={!position.teamId}
-                                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100"
-                               >
-                                 <option value="">Select participant</option>
-                                 {filteredParticipants.map((p, idx) => (
-                                   <option key={idx} value={p.name}>{p.name} {p.chestNumber ? `- ${p.chestNumber}` : ''}</option>
-                                 ))}
-                               </select>
-                             </div>
-                             <div>
-                               <label className="block text-xs font-medium text-gray-600 mb-1">Points</label>
-                               <input 
-                                 type="number" 
-                                 min="0" 
-                                 value={position.points} 
-                                 onChange={(e) => handlePositionChange(index, 'points', parseInt(e.target.value) || 0)}
-                                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                 placeholder="0"
-                               />
-                             </div>
-                             <div className="flex items-end">
-                               <button
-                                 type="button"
-                                 onClick={() => {
-                                   const newPositions = formData.positions.filter((_, i) => i !== index);
-                                   setFormData({ ...formData, positions: newPositions });
-                                 }}
-                                 className="w-full px-3 py-2 text-red-600 hover:text-red-800 text-sm flex items-center justify-center"
-                                 title="Remove position"
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </button>
-                             </div>
-                           </div>
-                         );
-                      })}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newPositions = [...formData.positions, { 
-                            teamId: '',
-                            participantName: '', 
-                            position: formData.positions.length + 1, 
-                            points: 0 
-                          }];
-                          setFormData({ ...formData, positions: newPositions });
-                        }}
-                        className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 text-sm"
-                      >
-                        + Add Position
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {!formData.isGroupEvent && formData.category === 'General' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Positions *</label>
-                    <div className="space-y-3">
-                      {formData.positions.map((position, index) => (
-                        <div key={index} className="grid grid-cols-3 gap-3 p-3 border border-gray-200 rounded-lg">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Positions *</label>
+                  <div className="space-y-3">
+                    {formData.positions.map((position, index) => {
+                      // Filter participants by selected team and category (or all team participants for group event / general)
+                      const selectedCat = (formData.category || '').toString().trim().toLowerCase();
+                      const filteredParticipants = allParticipants.filter(p => {
+                        if (p.teamId !== position.teamId) return false;
+                        if (formData.isGroupEvent || selectedCat === 'general') return true;
+                        return (p.category || '').toString().trim().toLowerCase() === selectedCat;
+                      });
+                      
+                      return (
+                        <div key={index} className="grid grid-cols-5 gap-3 p-3 border border-gray-200 rounded-lg">
                           <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Position</label>
                             <select 
@@ -560,6 +579,20 @@ const ScoreboardManagement = () => {
                             </select>
                           </div>
                           <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Participant</label>
+                            <select 
+                              value={position.participantName} 
+                              onChange={(e) => handlePositionChange(index, 'participantName', e.target.value)}
+                              disabled={!position.teamId}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100"
+                            >
+                              <option value="">Select participant</option>
+                              {filteredParticipants.map((p, idx) => (
+                                <option key={idx} value={p.name}>{p.name} {p.chestNumber ? `- ${p.chestNumber}` : ''}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Points</label>
                             <input 
                               type="number" 
@@ -570,26 +603,39 @@ const ScoreboardManagement = () => {
                               placeholder="0"
                             />
                           </div>
+                          <div className="flex items-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newPositions = formData.positions.filter((_, i) => i !== index);
+                                setFormData({ ...formData, positions: newPositions });
+                              }}
+                              className="w-full px-3 py-2 text-red-600 hover:text-red-800 text-sm flex items-center justify-center"
+                              title="Remove position"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newPositions = [...formData.positions, { 
-                            teamId: '',
-                            participantName: '', 
-                            position: formData.positions.length + 1, 
-                            points: 0 
-                          }];
-                          setFormData({ ...formData, positions: newPositions });
-                        }}
-                        className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 text-sm"
-                      >
-                        + Add Position
-                      </button>
-                    </div>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newPositions = [...formData.positions, { 
+                          teamId: '',
+                          participantName: '', 
+                          position: formData.positions.length + 1, 
+                          points: 0 
+                        }];
+                        setFormData({ ...formData, positions: newPositions });
+                      }}
+                      className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 text-sm"
+                    >
+                      + Add Position
+                    </button>
                   </div>
-                )}
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
                   <textarea name="remarks" rows={3} className="input-field" value={formData.remarks} onChange={handleInputChange} placeholder="Enter any remarks (optional)" />
