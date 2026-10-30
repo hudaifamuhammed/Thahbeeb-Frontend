@@ -1,6 +1,180 @@
-import { useState, useEffect } from 'react';
-import { Plus, Trophy, Edit, Trash2, Users, Calendar } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Trophy, Edit, Trash2, Users, Calendar, ChevronDown } from 'lucide-react';
 import { apiGet, apiPost, apiDelete, apiPut } from '../../lib/api';
+
+const GroupParticipantSelect = ({
+  teamId,
+  selectedNames = [],
+  onChange,
+  allParticipants = [],
+  itemCategory = ''
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  if (!teamId) {
+    return (
+      <select disabled className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-400 cursor-not-allowed">
+        <option>Select team first</option>
+      </select>
+    );
+  }
+
+  const teamParticipants = allParticipants.filter(p => p.teamId === teamId);
+  const targetCat = (itemCategory || '').toString().trim().toLowerCase();
+  
+  // Sort so matching category participants are at top
+  const sortedParticipants = [...teamParticipants].sort((a, b) => {
+    const aMatch = targetCat && (a.category || '').toLowerCase() === targetCat;
+    const bMatch = targetCat && (b.category || '').toLowerCase() === targetCat;
+    if (aMatch && !bMatch) return -1;
+    if (!aMatch && bMatch) return 1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  const filtered = sortedParticipants.filter(p => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (p.name || '').toLowerCase().includes(q) || (p.chestNumber || '').toLowerCase().includes(q);
+  });
+
+  const toggle = (name) => {
+    if (selectedNames.includes(name)) {
+      onChange(selectedNames.filter(n => n !== name));
+    } else {
+      onChange([...selectedNames, name]);
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-left flex items-center justify-between bg-white hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-primary-500"
+      >
+        <span className="truncate text-xs text-gray-700">
+          {selectedNames.length === 0 ? (
+            <span className="text-gray-400">Select participants</span>
+          ) : (
+            <span className="font-medium text-gray-900">
+              {selectedNames.length} selected ({selectedNames.slice(0, 2).join(', ')}{selectedNames.length > 2 ? '...' : ''})
+            </span>
+          )}
+        </span>
+        <ChevronDown className="h-4 w-4 text-gray-400 ml-1 flex-shrink-0" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 mt-1 left-0 w-72 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden">
+          <div className="p-2 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2">
+            <input
+              type="text"
+              placeholder="Search participants..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+              autoFocus
+            />
+            {selectedNames.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="text-[11px] text-red-600 hover:text-red-800 font-medium whitespace-nowrap"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="max-h-52 overflow-y-auto divide-y divide-gray-50 p-1">
+            {filtered.length === 0 ? (
+              <div className="p-3 text-center text-xs text-gray-500">
+                {teamParticipants.length === 0 ? 'No participants in this team' : 'No matching participants'}
+              </div>
+            ) : (
+              filtered.map((p, idx) => {
+                const isSelected = selectedNames.includes(p.name);
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => toggle(p.name)}
+                    className={`flex items-center px-2.5 py-1.5 rounded cursor-pointer transition-colors text-xs ${
+                      isSelected ? 'bg-primary-50 text-primary-900 font-medium' : 'hover:bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {}}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2 h-3.5 w-3.5 pointer-events-none"
+                    />
+                    <div className="flex-1 truncate">
+                      <span>{p.name}</span>
+                      {p.chestNumber && <span className="text-gray-400 ml-1 font-normal">({p.chestNumber})</span>}
+                    </div>
+                    {p.category && (
+                      <span className="text-[10px] px-1 py-0.5 rounded bg-gray-200/60 text-gray-600 font-normal ml-1">
+                        {p.category}
+                      </span>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <div className="p-1.5 bg-gray-50 border-t border-gray-100 text-right">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="px-2.5 py-1 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded"
+            >
+              Done ({selectedNames.length})
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectedNames.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1.5 max-h-16 overflow-y-auto">
+          {selectedNames.map((name) => (
+            <span
+              key={name}
+              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-primary-50 text-primary-800 border border-primary-200"
+            >
+              <span className="truncate max-w-[90px]">{name}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggle(name);
+                }}
+                className="ml-1 text-primary-600 hover:text-primary-900 font-bold"
+                title="Remove"
+              >
+                &times;
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ScoreboardManagement = () => {
   const [scores, setScores] = useState([]);
@@ -153,23 +327,37 @@ const ScoreboardManagement = () => {
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handlePositionChange = (index, field, value) => {
-    const newPositions = [...formData.positions];
-    newPositions[index] = { ...newPositions[index], [field]: value };
-    
-    // If team changes, reset participant name
-    if (field === 'teamId') {
-      newPositions[index].participantName = '';
-    }
-    
-    setFormData({ ...formData, positions: newPositions });
+  const handlePositionChange = (index, fieldOrUpdates, value) => {
+    setFormData(prev => {
+      const newPositions = [...(prev.positions || [])];
+      if (typeof fieldOrUpdates === 'object') {
+        newPositions[index] = { ...newPositions[index], ...fieldOrUpdates };
+      } else {
+        newPositions[index] = { ...newPositions[index], [fieldOrUpdates]: value };
+        if (fieldOrUpdates === 'teamId') {
+          newPositions[index].participantName = '';
+          newPositions[index].participantNames = [];
+        }
+      }
+      return { ...prev, positions: newPositions };
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault(); 
     setSubmitting(true);
     try {
-      const validPositions = (formData.positions || []).filter(p => p && p.teamId);
+      const validPositions = (formData.positions || []).filter(p => p && p.teamId).map(p => {
+        const pNames = Array.isArray(p.participantNames) && p.participantNames.length > 0
+          ? p.participantNames
+          : (p.participantName ? p.participantName.split(',').map(s => s.trim()).filter(Boolean) : []);
+        return {
+          ...p,
+          participantNames: pNames,
+          participantName: pNames.length > 0 ? pNames.join(', ') : (p.participantName || '')
+        };
+      });
+
       if (validPositions.length === 0) {
         alert('Please select at least one team in the positions list.');
         setSubmitting(false);
@@ -467,14 +655,26 @@ const ScoreboardManagement = () => {
                         <button className="text-primary-600 hover:text-primary-900" onClick={() => { 
                           setEditing(score); 
                           const isGroup = !!(score.isGroupEvent || score.category === 'Group');
+                          const mappedPositions = (score.positions && score.positions.length > 0 ? score.positions : [
+                            { teamId: '', participantName: '', participantNames: [], position: 1, points: 0 },
+                            { teamId: '', participantName: '', participantNames: [], position: 2, points: 0 },
+                            { teamId: '', participantName: '', participantNames: [], position: 3, points: 0 },
+                            { teamId: '', participantName: '', participantNames: [], position: 4, points: 0 }
+                          ]).map(p => {
+                            const pNames = Array.isArray(p.participantNames) && p.participantNames.length > 0
+                              ? p.participantNames
+                              : (p.participantName ? p.participantName.split(',').map(s => s.trim()).filter(Boolean) : []);
+                            return {
+                              ...p,
+                              participantNames: pNames,
+                              participantName: pNames.length > 0 ? pNames.join(', ') : (p.participantName || '')
+                            };
+                          });
                           setFormData({ 
                             itemId: score.itemId || '', 
                             category: isGroup ? 'Group' : normalizeEnumCategory(score.category || ''),
                             isGroupEvent: isGroup,
-                            positions: score.positions && score.positions.length > 0 ? score.positions : [
-                              { teamId: '', participantName: '', position: 1, points: 0 },
-                              { teamId: '', participantName: '', position: 2, points: 0 }
-                            ], 
+                            positions: mappedPositions, 
                             remarks: score.remarks || '' 
                           }); 
                           setShowModal(true); 
@@ -579,18 +779,35 @@ const ScoreboardManagement = () => {
                             </select>
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Participant</label>
-                            <select 
-                              value={position.participantName} 
-                              onChange={(e) => handlePositionChange(index, 'participantName', e.target.value)}
-                              disabled={!position.teamId}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100"
-                            >
-                              <option value="">Select participant</option>
-                              {filteredParticipants.map((p, idx) => (
-                                <option key={idx} value={p.name}>{p.name} {p.chestNumber ? `- ${p.chestNumber}` : ''}</option>
-                              ))}
-                            </select>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              {formData.isGroupEvent ? 'Participants' : 'Participant'}
+                            </label>
+                            {formData.isGroupEvent ? (
+                              <GroupParticipantSelect
+                                teamId={position.teamId}
+                                selectedNames={position.participantNames || (position.participantName ? position.participantName.split(',').map(s => s.trim()).filter(Boolean) : [])}
+                                onChange={(names) => {
+                                  handlePositionChange(index, {
+                                    participantNames: names,
+                                    participantName: names.join(', ')
+                                  });
+                                }}
+                                allParticipants={allParticipants}
+                                itemCategory={items.find(i => (i._id || i.id) === formData.itemId)?.category}
+                              />
+                            ) : (
+                              <select 
+                                value={position.participantName} 
+                                onChange={(e) => handlePositionChange(index, 'participantName', e.target.value)}
+                                disabled={!position.teamId}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100"
+                              >
+                                <option value="">Select participant</option>
+                                {filteredParticipants.map((p, idx) => (
+                                  <option key={idx} value={p.name}>{p.name} {p.chestNumber ? `- ${p.chestNumber}` : ''}</option>
+                                ))}
+                              </select>
+                            )}
                           </div>
                           <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Points</label>
@@ -625,6 +842,7 @@ const ScoreboardManagement = () => {
                         const newPositions = [...formData.positions, { 
                           teamId: '',
                           participantName: '', 
+                          participantNames: [],
                           position: formData.positions.length + 1, 
                           points: 0 
                         }];

@@ -76,7 +76,8 @@ const Scoreboard = () => {
   const calculateIndividualTotals = () => {
     const totals = {};
     scores.forEach((s) => {
-      if (s.category === 'General') return; // skip general for individual totals
+      // NEVER include group events or General category in individual totals
+      if (s.isGroupEvent || s.category === 'Group' || s.category === 'General') return;
       
       // Find the item to check its type
       const item = items.find(i => (i._id || i.id) === s.itemId);

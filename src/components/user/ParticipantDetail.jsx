@@ -45,6 +45,9 @@ const ParticipantDetail = () => {
       // Calculate participant's scores (only solo items for individual achievements)
       const participantScoresList = [];
       scoresList.forEach((score) => {
+        // Exclude group events and General category
+        if (score.isGroupEvent || score.category === 'Group' || score.category === 'General') return;
+
         // Find the item to check its type
         const item = itemsList.find(i => (i._id || i.id) === score.itemId);
         if (!item || item.type !== 'solo') return; // only include solo items for individual achievements
